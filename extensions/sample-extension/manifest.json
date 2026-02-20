@@ -1,0 +1,59 @@
+{
+  "$schema": "https://v-oss.example.com/extension-schema.json",
+  "id": "com.example.sample-extension",
+  "name": "サンプル拡張",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "publisher": "V-OSS Team",
+  "description": "拡張機能システムのサンプル実装です。印刷テンプレートとコマンドを提供します。",
+  "license": "MIT",
+
+  "capabilities": {
+    "patient": ["read"],
+    "chart": ["read"],
+    "treatmentRecord": ["read"]
+  },
+
+  "contributes": {
+    "commands": [
+      {
+        "id": "sample.printPatientInfo",
+        "title": "患者情報を印刷",
+        "icon": "printer",
+        "context": ["patient"],
+        "requiredCapabilities": {
+          "patient": ["read"]
+        }
+      },
+      {
+        "id": "sample.showPatientSummary",
+        "title": "患者サマリーを表示",
+        "icon": "file-text",
+        "context": ["patient", "chart"],
+        "keybinding": "ctrl+shift+s",
+        "requiredCapabilities": {
+          "patient": ["read"],
+          "chart": ["read"]
+        }
+      }
+    ],
+    "templates": [
+      {
+        "id": "sample.patientInfoCard",
+        "name": "患者情報カード",
+        "type": "print",
+        "file": "templates/patient-info.html",
+        "targetEntity": "patient",
+        "description": "A4サイズの患者情報カードを印刷します"
+      },
+      {
+        "id": "sample.treatmentSummary",
+        "name": "施術サマリー",
+        "type": "report",
+        "file": "templates/treatment-summary.html",
+        "targetEntity": "treatmentRecord",
+        "description": "施術記録のサマリーレポートを出力します"
+      }
+    ]
+  }
+}

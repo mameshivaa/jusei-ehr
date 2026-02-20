@@ -1,0 +1,810 @@
+// 無料配布版 接骨院向け電子カルテ - Prismaスキーマ
+// ローカル1PC用、テナント不要のシンプル構成
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// 接骨院情報
+// =============================================================================
+
+model Clinic {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("clinics")
+}
+
+// =============================================================================
+// ユーザー管理（ガイドライン準拠：アカウント管理強化）
+// =============================================================================
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  image        String?   // Googleアカウントの画像URL
+  role         UserRole  @default(PRACTITIONER)
+  
+  // Supabase認証連携
+  supabaseUserId String? @unique // Supabase AuthのユーザーID
+  
+  // アカウント状態管理（ガイドライン準拠）
+  status            AccountStatus @default(ACTIVE)
+  
+  // 認証失敗・ロックアウト管理（ガイドライン準拠）
+  failedLoginCount  Int           @default(0)
+  lockedUntil       DateTime?
+  lastFailedLoginAt DateTime?
+  
+  // パスワード管理（将来のID/PW認証対応用）
+  passwordHash      String?
+  passwordChangedAt DateTime?
+  mustChangePassword Boolean      @default(false)
+  
+  // MFA対応（ガイドライン準拠：多要素認証）
+  mfaEnabled        Boolean       @default(false)
+  mfaSecret         String?       // TOTP秘密鍵（暗号化推奨）
+  mfaBackupCodes    String?       // バックアップコード（JSON配列、暗号化推奨）
+  
+  // ログイン情報
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // リレーション
+  updatedRecords       TreatmentRecord[]        @relation("UpdatedBy")
+  confirmedRecords     TreatmentRecord[]        @relation("ConfirmedBy")
+  changedRecords       TreatmentRecordHistory[] @relation("ChangedBy")
+  auditLogs            AuditLog[]               @relation("AuditLogs")
+  proxyOperations      ProxyOperation[]         @relation("ProxyOperations")
+  proxyApprovals       ProxyOperation[]         @relation("ProxyApprovals")
+  sessions             UserSession[]            @relation("UserSessions")
+  permissionChangesTo  PermissionChangeLog[]    @relation("PermissionChangesTo")
+  permissionChangesBy  PermissionChangeLog[]    @relation("PermissionChangesBy")
+  scannedDocuments     ScannedDocument[]        @relation("ScannedDocuments")
+  emergencyLogs        EmergencyLog[]           @relation("EmergencyLogs")
+  recordTemplates      RecordTemplate[]
+  consentRecords       ConsentRecord[]
+  backupRunLogs        BackupRunLog[]
+  recoveryTestLogs     RecoveryTestLog[]
+
+  @@index([status])
+  @@index([email])
+  @@index([supabaseUserId])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  SECURITY_ADMIN
+  PRACTITIONER
+  RECEPTION
+}
+
+enum ChartStatus {
+  IN_TREATMENT
+  HEALED
+  DISCONTINUED
+  TRANSFERRED
+}
+
+enum AccountStatus {
+  ACTIVE      // 有効
+  SUSPENDED   // 一時停止
+  DELETED     // 削除済み
+}
+
+enum InjuryOutcome {
+  CURED        // 治癒
+  IMPROVED     // 軽快
+  UNCHANGED    // 不変
+  TRANSFERRED  // 転医
+  DISCONTINUED // 中止
+}
+
+enum LegalCauseType {
+  NORMAL       // 通常（日常生活）
+  WORK_ACCIDENT // 業務災害
+  COMMUTING    // 通勤災害
+  TRAFFIC      // 交通事故
+  OTHER        // その他
+}
+
+enum JudoInjuryCategory {
+  FRACTURE
+  INCOMPLETE_FRACTURE
+  DISLOCATION
+  CONTUSION
+  SPRAIN
+  STRAIN
+}
+
+enum LateralityRule {
+  NONE
+  REQUIRED
+}
+
+// =============================================================================
+// セッション管理（ガイドライン準拠：即時セッション無効化対応）
+// =============================================================================
+
+model UserSession {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  isValid      Boolean  @default(true)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  lastActiveAt DateTime @default(now())
+
+  // リレーション
+  user User @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([isValid])
+  @@map("user_sessions")
+}
+
+// =============================================================================
+// 権限変更履歴（ガイドライン準拠：権限変更の監査証跡）
+// =============================================================================
+
+model PermissionChangeLog {
+  id           String   @id @default(cuid())
+  targetUserId String
+  changedById  String
+  oldRole      String?
+  newRole      String?
+  oldStatus    String?
+  newStatus    String?
+  reason       String?
+  changedAt    DateTime @default(now())
+
+  // リレーション
+  targetUser User @relation("PermissionChangesTo", fields: [targetUserId], references: [id], onDelete: Cascade)
+  changedBy  User @relation("PermissionChangesBy", fields: [changedById], references: [id], onDelete: Restrict)
+
+  @@index([targetUserId])
+  @@index([changedById])
+  @@index([changedAt])
+  @@map("permission_change_logs")
+}
+
+// =============================================================================
+// システム設定（ガイドライン準拠：設定の一元管理）
+// =============================================================================
+
+model SystemSettings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  description String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("system_settings")
+}
+
+// =============================================================================
+// 利用規約・プライバシーポリシー同意の証跡
+// =============================================================================
+
+model ConsentRecord {
+  id           String      @id @default(cuid())
+  consentType  ConsentType
+  termsVersion String
+  termsHash    String
+  ipAddress    String?
+  userAgent    String?
+  consentedAt  DateTime    @default(now())
+  createdAt    DateTime    @default(now())
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([consentType])
+  @@index([userId])
+  @@map("consent_records")
+}
+
+enum ConsentType {
+  TERMS
+  PRIVACY
+}
+
+// =============================================================================
+// 患者管理
+// =============================================================================
+
+model Patient {
+  id              String    @id @default(cuid())
+  // 氏名（分割）
+  lastName        String    @default("")
+  firstName       String    @default("")
+  lastKana        String    @default("")
+  firstKana       String    @default("")
+  // 旧：結合済み氏名（段階的に廃止予定）
+  name            String    @default("")
+  kana            String    @default("")
+  birthDate       DateTime?
+  gender          String?
+  phone           String?   // 個人情報保護法対応：暗号化推奨
+  email           String?   // 個人情報保護法対応：暗号化推奨
+  // 住所（正規化）
+  postalCode      String?   // 個人情報保護法対応：暗号化推奨
+  prefecture      String?   // 個人情報保護法対応：暗号化推奨
+  city            String?   // 個人情報保護法対応：暗号化推奨
+  address1        String?   // 個人情報保護法対応：暗号化推奨
+  address2        String?   // 個人情報保護法対応：暗号化推奨
+  // 旧：結合済み住所（段階的に廃止予定）
+  address         String?   // 個人情報保護法対応：暗号化推奨
+  patientNumber   String?   @unique // 患者ID（旧: 患者ID）
+  memo            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  isDeleted       Boolean   @default(false)
+  deletedAt       DateTime?
+  deletedBy       String?
+  deleteReason    String?
+
+  // リレーション
+  charts           Chart[]
+  visits           Visit[]
+  injuries         Injury[]
+  scannedDocuments ScannedDocument[]
+  contacts         PatientContact[]
+
+  // インデックス
+  @@index([lastName])
+  @@index([lastKana])
+  @@index([name])
+  @@index([kana])
+  @@index([phone])
+  @@map("patients")
+}
+
+model PatientContact {
+  id         String   @id @default(cuid())
+  patientId  String
+  phone      String   // 個人情報保護法対応：暗号化推奨
+  relation   String?
+  name       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("patient_contacts")
+}
+
+// =============================================================================
+// カルテ（JUXSEI互換モデル）
+// =============================================================================
+
+model Chart {
+  id               String      @id @default(cuid())
+  patientId        String
+  status           ChartStatus @default(IN_TREATMENT)
+  insuranceType    String?     // 健康保険、労災、自賠責など
+  // 保険証情報（カルテ単位で保持）
+  insuranceNumber            String?
+  insuranceInsurerNumber     String?
+  insuranceCertificateSymbol String?
+  insuranceCertificateNumber String?
+  insuranceExpiryDate        DateTime?
+  insuranceEffectiveFrom     DateTime?
+  insuranceCopaymentRate     Decimal?
+  publicAssistanceNumber     String?
+  publicAssistanceRecipient  String?
+  firstVisitDate   DateTime?
+  lastVisitDate    DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  isDeleted        Boolean     @default(false)
+  deletedAt        DateTime?
+  deletedBy        String?
+  deleteReason     String?
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  injuries Injury[]
+  visits   Visit[]
+
+  @@index([patientId])
+  @@index([status])
+  @@index([isDeleted])
+  @@map("charts")
+}
+
+// =============================================================================
+// 負傷エピソード（施術録12項目対応：項目2〜8の中核）
+// =============================================================================
+
+model Injury {
+  id              String    @id @default(cuid())
+  patientId       String
+  chartId         String
+  judoInjuryMasterId String?
+
+  // 必須項目
+  injuryDate      DateTime           // 負傷年月日
+  memo            String?            // メモ
+  injuryName      String             // 負傷名（例: 腰部捻挫）
+  medicalInjuryName String?          // 病名自由記述（任意）
+  firstVisitDate  DateTime           // 初検日（injuryDate以降であること）
+  
+  // 任意項目
+  injuryTime      String?            // 負傷時刻（"14:30"など）
+  endDate         DateTime?          // 施術終了日
+  outcome         InjuryOutcome?     // 転帰
+  outcomeDate     DateTime?          // 転帰日
+  legalCauseType  LegalCauseType?    // 法的原因区分（保険制度上の分岐用）
+  
+  // 同意医師（必要な場合に任意で入力）
+  requiresConsent Boolean  @default(false)
+  consentDoctor   String?            // 同意医師名
+  consentDate     DateTime?          // 同意日
+  consentDocId    String?            // 同意書スキャン文書ID（ScannedDocument.id）
+  
+  // 将来のレセコン連携用（現時点ではUIに出さない内部用フィールド）
+  externalClaimId String?
+  
+  // メタデータ
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  isDeleted       Boolean  @default(false)
+  deletedAt       DateTime?
+  
+  // リレーション
+  patient          Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  chart            Chart             @relation(fields: [chartId], references: [id], onDelete: Cascade)
+  judoInjuryMaster JudoInjuryMaster? @relation(fields: [judoInjuryMasterId], references: [id], onDelete: SetNull)
+  treatmentRecords TreatmentRecord[] @relation("InjuryRecords")
+
+  // インデックス
+  @@index([patientId])
+  @@index([chartId])
+  @@index([judoInjuryMasterId])
+  @@index([injuryDate])
+  @@index([firstVisitDate])
+  @@index([isDeleted])
+  @@map("injuries")
+}
+
+// =============================================================================
+// 柔道整復 療養費算定用の標準負傷名マスター
+// =============================================================================
+
+model JudoInjuryMaster {
+  id             String           @id @default(cuid())
+  category       JudoInjuryCategory
+  partLabel      String
+  sortOrder      Int
+  lateralityRule LateralityRule   @default(REQUIRED)
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  injuries       Injury[]
+
+  @@unique([category, partLabel])
+  @@index([category])
+  @@index([isActive])
+  @@map("judo_injury_masters")
+}
+
+// =============================================================================
+// 来院記録
+// =============================================================================
+
+model Visit {
+  id        String    @id @default(cuid())
+  patientId String
+  chartId   String
+  visitDate DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // リレーション
+  patient          Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  chart            Chart             @relation(fields: [chartId], references: [id], onDelete: Cascade)
+  treatmentRecords TreatmentRecord[]
+
+  @@index([patientId, visitDate(sort: Desc)])
+  @@index([chartId, visitDate(sort: Desc)])
+  @@map("visits")
+}
+
+// =============================================================================
+// 施術記録（SOAP形式）
+// =============================================================================
+
+model TreatmentRecord {
+  id        String    @id @default(cuid())
+  visitId   String
+  injuryId  String?   // 関連する負傷エピソード（新規作成時は必須、過去データはnull許容）
+  
+  // 記録内容
+  narrative  String?  // 自由記述
+  version    Int      @default(1) // 楽観的ロック
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  updatedBy  String   // 最終更新者User.id
+  isDeleted  Boolean  @default(false)
+  deletedAt  DateTime?
+  deletedBy  String?
+  deleteReason String?
+  isConfirmed Boolean @default(false) // 記録の確定フラグ（ガイドライン準拠）
+  confirmedBy String? // 確定者User.id
+  confirmedAt DateTime? // 確定日時
+  
+  // e-文書法対応：電子署名・タイムスタンプ
+  digitalSignature String? // 電子署名（JSON形式）
+  timestampHash    String? // タイムスタンプハッシュ
+  timestampSource  String? // タイムスタンプソース（SYSTEM/TSA）
+
+  // リレーション
+  visit            Visit             @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  injury           Injury?           @relation("InjuryRecords", fields: [injuryId], references: [id], onDelete: SetNull)
+  updatedByUser    User              @relation("UpdatedBy", fields: [updatedBy], references: [id], onDelete: Restrict)
+  confirmedByUser  User?             @relation("ConfirmedBy", fields: [confirmedBy], references: [id], onDelete: SetNull)
+  history          TreatmentRecordHistory[]
+  treatmentDetails TreatmentDetail[]
+
+  @@index([visitId])
+  @@index([injuryId])
+  @@index([isDeleted])
+  @@map("treatment_records")
+}
+
+// =============================================================================
+// 施術録テンプレート
+// =============================================================================
+
+model RecordTemplate {
+  id          String   @id @default(cuid())
+  title       String
+  narrative   String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+
+  // リレーション
+  user User? @relation(fields: [createdBy], references: [id])
+
+  @@index([createdBy])
+  @@index([isDeleted])
+  @@map("record_templates")
+}
+
+// =============================================================================
+// 施術記録の更新履歴（ガイドライン準拠：更新履歴の保管）
+// =============================================================================
+
+model TreatmentRecordHistory {
+  id        String   @id @default(cuid())
+  recordId  String
+  // 変更前の値
+  narrative  String?
+  // 変更後の値（全文書スナップショット）
+  beforeData Json?
+  afterData  Json?
+  version    Int      // 変更時のバージョン
+  // 変更情報
+  changedBy  String   // 変更者User.id
+  changedAt DateTime  @default(now())
+  changeType String   // "CREATE", "UPDATE", "DELETE", "CONFIRM"
+  changeReason String? // 変更理由（代行操作の場合など）
+  // 改ざん検知用ハッシュ連鎖（追記専用）
+  hash     String?
+  prevHash String?
+
+  // リレーション
+  record    TreatmentRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  changedByUser User         @relation("ChangedBy", fields: [changedBy], references: [id], onDelete: Restrict)
+
+  @@index([recordId, changedAt(sort: Desc)])
+  @@index([changedBy])
+  @@map("treatment_record_history")
+}
+
+// =============================================================================
+// 施術マスタ（施術録12項目対応：施術明細の基礎）
+// =============================================================================
+
+model ProcedureMaster {
+  id           String  @id @default(cuid())
+  code         String  @unique  // アプリ内コード（例: JX-LO-SPRAIN-01）
+  name         String           // 施術名
+  category     String?          // カテゴリ（手技療法、物理療法、など）
+  defaultPrice Int?             // 参考単価（円）- 最終的な請求計算はレセコン側で行う
+  description  String?          // 説明
+  isActive     Boolean @default(true)
+  
+  // 将来のレセコン連携用
+  externalCode String?          // レセコン側の施術コード
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // リレーション
+  treatmentDetails TreatmentDetail[]
+  
+  @@index([code])
+  @@index([category])
+  @@index([isActive])
+  @@map("procedure_masters")
+}
+
+// =============================================================================
+// 施術明細（施術録12項目対応：項目10）
+// =============================================================================
+
+model TreatmentDetail {
+  id                String   @id @default(cuid())
+  treatmentRecordId String
+  procedureId       String
+  
+  // 施術部位（実際に施術した部位を記録）
+  bodyPart          String?
+  
+  quantity          Int      @default(1)  // 回数・数量
+  unitPrice         Int?                  // 参考単価（円）- 最終的な請求計算はレセコン側で行う
+  note              String?               // 補足メモ
+  
+  createdAt         DateTime @default(now())
+  
+  // リレーション
+  treatmentRecord TreatmentRecord @relation(fields: [treatmentRecordId], references: [id], onDelete: Cascade)
+  procedure       ProcedureMaster @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+  
+  @@index([treatmentRecordId])
+  @@index([procedureId])
+  @@map("treatment_details")
+}
+
+// =============================================================================
+// 監査ログ（ガイドライン準拠：操作ログの記録）
+// =============================================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?  // 操作者（システム操作の場合はnull）
+  sessionId  String?  // セッションID
+  
+  // 操作情報
+  action     String   // "CREATE", "READ", "UPDATE", "DELETE", "LOGIN", "LOGOUT", "CONFIRM"
+  entityType String   // "PATIENT", "TREATMENT_RECORD", "VISIT", "USER"
+  entityId   String?  // 対象エンティティのID
+  resourcePath String? // APIエンドポイントやページパス
+  
+  // 詳細情報
+  metadata   Json?    // 追加メタデータ（変更前後の値、クエリパラメータ等）
+  ipAddress  String?  // クライアントIPアドレス
+  userAgent  String?  // ユーザーエージェント
+  
+  // セキュリティ
+  severity   String   @default("INFO") // "INFO", "WARNING", "ERROR", "CRITICAL"
+  category   String   // "AUTHENTICATION", "DATA_ACCESS", "DATA_MODIFICATION", "SYSTEM"
+  
+  // タイムスタンプ
+  createdAt  DateTime @default(now())
+  
+  // 改ざん防止（ガイドライン準拠）
+  checksum   String?  // ログエントリのハッシュ値
+  
+  // リレーション
+  user       User?    @relation("AuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([severity])
+  @@index([category])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// バックアップ実行ログ（追記専用）
+// =============================================================================
+
+model BackupRunLog {
+  id             String   @id @default(cuid())
+  runType        String   // "AUTO" | "MANUAL"
+  success        Boolean
+  startedAt      DateTime
+  finishedAt     DateTime?
+  durationMs     Int?
+  backupFileName String?
+  encrypted      Boolean  @default(false)
+  description    String?
+  deletedCount   Int?
+  error          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([runType, startedAt(sort: Desc)])
+  @@index([createdBy])
+  @@map("backup_run_logs")
+}
+
+// =============================================================================
+// 復旧テストログ（追記専用）
+// =============================================================================
+
+model RecoveryTestLog {
+  id              String   @id @default(cuid())
+  backupFileName  String?
+  backupCreatedAt DateTime?
+  testStartedAt   DateTime
+  testEndedAt     DateTime
+  durationMs      Int
+  rtoSeconds      Int
+  rpoSeconds      Int?
+  success         Boolean
+  notes           String?
+  performedBy     String?
+  createdAt       DateTime @default(now())
+
+  user User? @relation(fields: [performedBy], references: [id], onDelete: SetNull)
+
+  @@index([testStartedAt(sort: Desc)])
+  @@index([performedBy])
+  @@map("recovery_test_logs")
+}
+
+// =============================================================================
+// 代行操作の承認（ガイドライン準拠：代行操作の承認機能）
+// =============================================================================
+
+model ProxyOperation {
+  id          String   @id @default(cuid())
+  operatorId  String   // 実際の操作者User.id
+  approverId  String   // 承認者User.id
+  entityType  String   // "TREATMENT_RECORD", "PATIENT"等
+  entityId    String   // 対象エンティティのID
+  action      String   // "CREATE", "UPDATE", "DELETE"
+  reason      String   // 代行理由
+  status      String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  approvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  
+  // リレーション
+  operator    User     @relation("ProxyOperations", fields: [operatorId], references: [id], onDelete: Restrict)
+  approver    User     @relation("ProxyApprovals", fields: [approverId], references: [id], onDelete: Restrict)
+  
+  @@index([operatorId])
+  @@index([approverId])
+  @@index([status])
+  @@map("proxy_operations")
+}
+
+// =============================================================================
+// スキャン文書管理（ガイドライン準拠：スキャナ保存・電子化）
+// =============================================================================
+
+model ScannedDocument {
+  id              String   @id @default(cuid())
+  patientId       String
+  
+  // 文書情報
+  documentType    String   // CONSENT（同意書）, REFERRAL（紹介状）, INSURANCE（保険証）, OTHER
+  title           String?  // 文書タイトル
+  description     String?  // 説明
+  
+  // 原本管理（ガイドライン準拠）
+  originalExists  Boolean  @default(true)  // 原本が存在するか
+  isReference     Boolean  @default(false) // 参考資料フラグ（参照用スキャン）
+  originalDate    DateTime? // 原本の日付
+  
+  // 取り込み方法（ガイドライン準拠：電子化の方法を記録）
+  sourceType      String   @default("IMMEDIATE_SCAN") // IMMEDIATE_SCAN（即時スキャン）, BATCH_DIGITIZE（一括電子化）, CONVENIENCE（外部電子化サービス）
+  
+  // 原本照合情報（ガイドライン準拠：原本との照合記録）
+  verifiedAt      DateTime?  // 原本照合日時
+  verifiedBy      String?    // 原本照合担当者User.id
+  verificationNote String?   // 照合時のメモ
+  
+  // 電子化情報
+  scannedAt       DateTime @default(now())
+  scannedBy       String   // スキャン担当者User.id
+  
+  // ファイル情報
+  fileName        String   // 元のファイル名
+  filePath        String   // 暗号化ストレージパス
+  fileSize        Int      // ファイルサイズ（バイト）
+  mimeType        String   // MIMEタイプ（application/pdf, image/jpeg等）
+  fileHash        String   // ファイルの整合性チェック用ハッシュ（SHA-256）
+  
+  // 画質設定（ガイドライン準拠：画像品質の確保）
+  resolution      Int?     // DPI（解像度）
+  colorMode       String?  // COLOR, GRAYSCALE, MONOCHROME
+  compressionType String?  // NONE, LOSSLESS, LOSSY
+  
+  // メタデータ
+  metadata        Json?    // 追加メタデータ
+  
+  // タイムスタンプ
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  isDeleted       Boolean  @default(false)
+  deletedAt       DateTime?
+  
+  // リレーション
+  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  scannedByUser   User     @relation("ScannedDocuments", fields: [scannedBy], references: [id], onDelete: Restrict)
+  
+  @@index([patientId])
+  @@index([documentType])
+  @@index([scannedAt])
+  @@index([isDeleted])
+  @@map("scanned_documents")
+}
+
+// =============================================================================
+// ログイン試行記録（ガイドライン準拠：認証ログの詳細記録）
+// =============================================================================
+
+model LoginAttempt {
+  id            String   @id @default(cuid())
+  email         String   // 試行されたメールアドレス
+  userId        String?  // 該当ユーザーID（存在する場合）
+  success       Boolean  // 成功/失敗
+  failureReason String?  // 失敗理由（INVALID_CREDENTIALS, ACCOUNT_LOCKED, MFA_REQUIRED等）
+  mfaRequired   Boolean  @default(false) // MFAが必要だったか
+  mfaVerified   Boolean  @default(false) // MFAが成功したか
+  ipAddress     String?  // クライアントIP
+  userAgent     String?  // ユーザーエージェント
+  sessionId     String?  // 成功時のセッションID
+  createdAt     DateTime @default(now())
+
+  @@index([email])
+  @@index([userId])
+  @@index([success])
+  @@index([createdAt])
+  @@index([ipAddress])
+  @@map("login_attempts")
+}
+
+// =============================================================================
+// 緊急操作ログ（ガイドライン準拠：緊急操作の詳細記録）
+// =============================================================================
+
+model EmergencyLog {
+  id            String   @id @default(cuid())
+  userId        String   // 実行者
+  action        String   // LOCK_ALL, UNLOCK_ALL, LOGOUT_ALL, MODE_CHANGE
+  previousState String?  // 変更前の状態
+  newState      String?  // 変更後の状態
+  affectedCount Int?     // 影響を受けたユーザー/セッション数
+  ipAddress     String?
+  userAgent     String?
+  reason        String   // 実行理由
+  confirmed     Boolean  @default(false) // 確認済みか
+  createdAt     DateTime @default(now())
+
+  // リレーション
+  user User @relation("EmergencyLogs", fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("emergency_logs")
+}

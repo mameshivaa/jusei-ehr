@@ -1,0 +1,314 @@
+/**
+ * JUXSEI医療システム専用CSSテーマ
+ * 現在のindigo/gray系統を維持しつつ医療特化
+ * TailwindCSS v3対応
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 医療システム専用CSS変数（現在の色に合わせて調整） */
+:root {
+  /* Primary Colors (シックなグレー系統) */
+  --medical-primary-50: 249 250 251; /* gray-50 */
+  --medical-primary-100: 243 244 246; /* gray-100 */
+  --medical-primary-200: 229 231 235; /* gray-200 */
+  --medical-primary-300: 209 213 219; /* gray-300 */
+  --medical-primary-400: 156 163 175; /* gray-400 */
+  --medical-primary-500: 107 114 128; /* gray-500 */
+  --medical-primary-600: 75 85 99; /* gray-600（メイン） */
+  --medical-primary-700: 55 65 81; /* gray-700（ホバー） */
+  --medical-primary-800: 31 41 55; /* gray-800 */
+  --medical-primary-900: 17 24 39; /* gray-900 */
+
+  /* Gray Colors (現在のgray系統を維持) */
+  --medical-gray-50: 249 250 251; /* gray-50 */
+  --medical-gray-100: 243 244 246; /* gray-100 */
+  --medical-gray-200: 229 231 235; /* gray-200 */
+  --medical-gray-300: 209 213 219; /* gray-300 */
+  --medical-gray-500: 107 114 128; /* gray-500 */
+  --medical-gray-600: 75 85 99; /* gray-600 */
+  --medical-gray-700: 55 65 81; /* gray-700 */
+  --medical-gray-800: 31 41 55; /* gray-800 */
+  --medical-gray-900: 17 24 39; /* gray-900 */
+
+  /* Medical Semantic Colors（現在使用中の色を維持） */
+  --medical-emergency: 239 68 68; /* red-500 */
+  --medical-warning: 245 158 11; /* amber-500 */
+  --medical-success: 16 185 129; /* emerald-500 */
+  --medical-info: 100 116 139; /* slate-500 */
+  --medical-neutral: 100 116 139; /* slate-500 */
+
+  /* Functional Colors（グレー系統に統一） */
+  --medical-setup: 75 85 99; /* gray-600 */
+  --medical-license: 107 114 128; /* gray-500 */
+  --medical-audit: 55 65 81; /* gray-700 */
+  --medical-security: 239 68 68; /* red-500（警告色のみ維持） */
+
+  /* Typography（現在のフォント設定に合わせて調整） */
+  --medical-font-size-base: 1rem;
+  --medical-line-height-base: 1.5;
+  --medical-font-weight-normal: 400;
+  --medical-font-weight-medium: 500;
+  --medical-font-weight-semibold: 600;
+
+  /* Spacing（現在のスペーシングパターンを維持） */
+  --medical-spacing-xs: 0.25rem; /* 4px */
+  --medical-spacing-sm: 0.5rem; /* 8px */
+  --medical-spacing-md: 1rem; /* 16px */
+  --medical-spacing-lg: 1.5rem; /* 24px */
+  --medical-spacing-xl: 2rem; /* 32px */
+
+  /* Shadows（現在の控えめなシャドウ設定を維持） */
+  --medical-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --medical-shadow-base: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --medical-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --medical-shadow-focus: 0 0 0 3px rgb(75 85 99 / 0.5); /* gray-600 focus */
+  --medical-shadow-emergency: 0 0 0 3px rgb(239 68 68 / 0.5); /* red-500 focus */
+
+  /* Border Radius（現在の設定を維持） */
+  --medical-radius-sm: 0.25rem; /* 4px */
+  --medical-radius-base: 0.375rem; /* 6px */
+  --medical-radius-md: 0.5rem; /* 8px */
+  --medical-radius-lg: 0.75rem; /* 12px */
+
+  /* Animation（現在の控えめな設定を維持） */
+  --medical-duration-fast: 150ms;
+  --medical-duration-normal: 300ms;
+  --medical-duration-slow: 500ms;
+  --medical-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 医療システム専用ベースクラス */
+@layer base {
+  /* 医療現場でのフォント可読性最適化 */
+  .medical-text {
+    @apply font-medium tracking-wide;
+    font-feature-settings:
+      "kern" 1,
+      "liga" 1,
+      "calt" 1;
+  }
+
+  /* 医療データ表示用モノスペースフォント */
+  .medical-data {
+    @apply font-mono text-sm tracking-wider;
+    font-feature-settings:
+      "tnum" 1,
+      "zero" 1;
+  }
+
+  /* アクセシビリティ: 高コントラスト要素 */
+  .medical-high-contrast {
+    @apply contrast-more:border-black contrast-more:text-black;
+  }
+}
+
+/* 医療システム専用コンポーネントクラス（現在のスタイルベース） */
+@layer components {
+  /* 医療ボタン基本スタイル（現在のButtonコンポーネントベース） */
+  .medical-button {
+    @apply inline-flex items-center justify-center;
+    @apply font-medium text-sm leading-none;
+    @apply border border-transparent rounded-md;
+    @apply transition-colors duration-150 ease-in-out;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:pointer-events-none;
+
+    /* 最小タッチターゲットサイズ (44px) */
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* プライマリボタン（グレー系統） */
+  .medical-button-primary {
+    @apply medical-button;
+    @apply bg-gray-600 text-white;
+    @apply hover:bg-gray-700;
+    @apply focus:ring-gray-500;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  /* セカンダリボタン（現在のgray色を維持） */
+  .medical-button-secondary {
+    @apply medical-button;
+    @apply bg-gray-100 text-gray-900;
+    @apply hover:bg-gray-200;
+    @apply focus:ring-gray-300;
+  }
+
+  /* 危険ボタン（現在のred色を維持） */
+  .medical-button-danger {
+    @apply medical-button;
+    @apply bg-red-600 text-white;
+    @apply hover:bg-red-700;
+    @apply focus:ring-red-500;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  /* 成功ボタン（現在のgreen色を維持） */
+  .medical-button-success {
+    @apply medical-button;
+    @apply bg-green-600 text-white;
+    @apply hover:bg-green-700;
+    @apply focus:ring-green-500;
+  }
+
+  /* 医療カード（現在のカードスタイルベース） */
+  .medical-card {
+    @apply bg-white rounded-lg border border-gray-200;
+    @apply shadow-sm hover:shadow-md;
+    @apply transition-shadow duration-300;
+    @apply p-6;
+  }
+
+  /* 医療フォーム（現在のフォームスタイルベース） */
+  .medical-form-field {
+    @apply space-y-2;
+  }
+
+  .medical-form-label {
+    @apply block text-sm font-medium text-gray-700;
+    @apply mb-1;
+  }
+
+  .medical-form-input {
+    @apply block w-full rounded-md border-gray-300;
+    @apply px-3 py-2;
+    @apply text-base placeholder-gray-400;
+    @apply focus:border-gray-500 focus:ring-gray-500;
+    @apply transition-colors duration-150;
+
+    /* 最小高さでアクセシビリティ確保 */
+    min-height: 44px;
+  }
+
+  /* 医療プログレスバー（現在のSetupProgressスタイルベース） */
+  .medical-progress {
+    @apply w-full bg-gray-200 rounded-full overflow-hidden;
+    height: 8px;
+  }
+
+  .medical-progress-fill {
+    @apply h-full transition-all duration-500 ease-out;
+    @apply bg-gradient-to-r from-gray-500 to-gray-600;
+  }
+
+  /* 医療ステータスインジケーター（現在の色設定を維持） */
+  .medical-status-success {
+    @apply bg-green-50 text-green-800 border-green-200;
+  }
+
+  .medical-status-warning {
+    @apply bg-yellow-50 text-yellow-800 border-yellow-200;
+  }
+
+  .medical-status-error {
+    @apply bg-red-50 text-red-800 border-red-200;
+  }
+
+  .medical-status-info {
+    @apply bg-slate-50 text-slate-800 border-slate-200;
+  }
+
+  /* 医療ローディングスピナー（現在のスピナースタイルベース） */
+  .medical-spinner {
+    @apply animate-spin rounded-full border-2 border-gray-200;
+    @apply border-t-gray-600;
+    width: 24px;
+    height: 24px;
+  }
+
+  .medical-spinner-lg {
+    @apply medical-spinner;
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+  }
+}
+
+/* 医療システム専用ユーティリティクラス */
+@layer utilities {
+  /* 医療データ表示用 */
+  .medical-data-display {
+    @apply font-mono text-sm tabular-nums;
+  }
+
+  /* 緊急時強調表示 */
+  .medical-emergency-highlight {
+    @apply bg-red-50 border-2 border-red-200 text-red-900;
+    @apply animate-pulse;
+  }
+
+  /* アクセシビリティ: フォーカス強調 */
+  .medical-focus-visible {
+    @apply focus-visible:ring-4 focus-visible:ring-gray-500/50;
+    @apply focus-visible:ring-offset-2;
+  }
+
+  /* 医療現場配慮: 動きを抑制したアニメーション */
+  @media (prefers-reduced-motion: reduce) {
+    .medical-smooth-animation {
+      @apply transition-none;
+    }
+  }
+
+  /* ダークモード対応（将来拡張用） */
+  @media (prefers-color-scheme: dark) {
+    .medical-dark-mode {
+      @apply bg-gray-900 text-gray-100;
+    }
+  }
+
+  /* 高コントラストモード対応 */
+  @media (prefers-contrast: high) {
+    .medical-high-contrast {
+      @apply border-black text-black bg-white;
+    }
+  }
+}
+
+/* カスタムアニメーション（医療現場配慮：控えめ） */
+@keyframes medical-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes medical-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes medical-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-medical-pulse {
+  animation: medical-pulse 2s ease-in-out infinite;
+}
+.animate-medical-bounce {
+  animation: medical-bounce 1s ease-in-out infinite;
+}
+.animate-medical-shake {
+  animation: medical-shake 0.5s ease-in-out;
+}

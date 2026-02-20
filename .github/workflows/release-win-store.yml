@@ -1,0 +1,150 @@
+name: release-win-store
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund --ignore-scripts
+
+      - name: Build native modules
+        run: npm rebuild better-sqlite3
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Create database for build
+        run: npx prisma db push
+        env:
+          DATABASE_URL: file:./prisma/dev.db
+
+      - name: Build Windows Store package (AppX)
+        run: npm run electron:dist:win:store
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATABASE_URL: file:./prisma/dev.db
+          NEXTAUTH_SECRET: build-secret-for-ci
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Verify packaged runtime modules
+        shell: pwsh
+        run: |
+          $appx = Get-ChildItem dist/*.appx | Select-Object -First 1
+          if (-not $appx) { throw "No AppX file found in dist/" }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($appx.FullName)
+          try {
+            $entries = $zip.Entries.FullName
+            $requiredAny = @(
+              @(
+                "app/resources/app/node_modules/next/package.json",
+                "app/resources/node_modules/next/package.json"
+              ),
+              @(
+                "app/resources/app/node_modules/react/package.json",
+                "app/resources/node_modules/react/package.json"
+              ),
+              @(
+                "app/resources/app/node_modules/@prisma/client/package.json",
+                "app/resources/node_modules/@prisma/client/package.json",
+                "app/resources/app/node_modules/%40prisma/client/package.json",
+                "app/resources/node_modules/%40prisma/client/package.json"
+              ),
+              @(
+                "app/resources/app/prisma-client/default.js",
+                "app/resources/prisma-client/default.js"
+              )
+            )
+            foreach ($candidates in $requiredAny) {
+              $found = $false
+              foreach ($path in $candidates) {
+                if ($entries -contains $path) {
+                  $found = $true
+                  break
+                }
+              }
+              if (-not $found) {
+                throw "Missing runtime file in AppX (any of): $($candidates -join ', ')"
+              }
+            }
+          } finally {
+            $zip.Dispose()
+          }
+
+      - name: Create sideload-signed AppX for local validation
+        shell: pwsh
+        run: |
+          $appx = Get-ChildItem dist/*.appx | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $appx) { throw "No AppX file found in dist/" }
+
+          $sideloadAppx = Join-Path $appx.DirectoryName ("{0}-sideload{1}" -f [System.IO.Path]::GetFileNameWithoutExtension($appx.Name), $appx.Extension)
+          Copy-Item $appx.FullName $sideloadAppx -Force
+
+          $subject = "CN=8BB29D3A-7DD6-415D-AE84-9EE75DE3E28B"
+          $cert = New-SelfSignedCertificate `
+            -Type CodeSigningCert `
+            -Subject $subject `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -HashAlgorithm SHA256 `
+            -KeyAlgorithm RSA `
+            -KeyLength 2048 `
+            -NotAfter (Get-Date).AddYears(1)
+
+          $cerPath = Join-Path $appx.DirectoryName "sideload-test.cer"
+          Export-Certificate -Cert $cert -FilePath $cerPath | Out-Null
+
+          $pfxPasswordPlain = [Guid]::NewGuid().ToString("N")
+          $pfxPassword = ConvertTo-SecureString -String $pfxPasswordPlain -AsPlainText -Force
+          $pfxPath = Join-Path $env:RUNNER_TEMP "sideload-test-signing.pfx"
+          Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $pfxPassword | Out-Null
+
+          $signTool = (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
+          if (-not $signTool) {
+            $signTool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $signTool) { throw "signtool.exe not found" }
+
+          & $signTool sign /fd SHA256 /f $pfxPath /p $pfxPasswordPlain $sideloadAppx
+          if ($LASTEXITCODE -ne 0) { throw "signtool sign failed for $sideloadAppx" }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($sideloadAppx)
+          try {
+            $hasSignature = $zip.Entries.FullName -contains "AppxSignature.p7x"
+            if (-not $hasSignature) { throw "Signed sideload AppX is missing AppxSignature.p7x" }
+          } finally {
+            $zip.Dispose()
+          }
+
+          @"
+          Local sideload install steps:
+          1) Import sideload-test.cer to Local Machine -> Trusted People (or Trusted Root Certification Authorities).
+          2) Install the *-sideload.appx package with Add-AppxPackage.
+          "@ | Set-Content (Join-Path $appx.DirectoryName "SIDELOAD-INSTALL.txt")
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-store-dist
+          path: |
+            dist/*.appx
+            dist/*.cer
+            dist/SIDELOAD-INSTALL.txt
+          if-no-files-found: error

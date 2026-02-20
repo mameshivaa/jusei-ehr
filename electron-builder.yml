@@ -1,0 +1,126 @@
+# electron-builder 設定ファイル
+# v-oss デスクトップアプリケーションビルド設定
+
+appId: "com.mame.judotherapyrecord"
+productName: "Judo Therapy Record"
+copyright: "Copyright © 2024"
+
+# ビルド出力先
+directories:
+  output: dist
+  buildResources: build
+  app: .next/standalone
+
+# ファイル設定
+files:
+  - "**/*"
+  - "node_modules/.prisma/**/*"
+  - "!**/*.ts"
+  - "!**/.env"
+  - "!**/backups/**"
+  - "!node_modules/.cache"
+
+# asar設定（アプリケーションアーカイブ）
+# NOTE: appDirをstandaloneに切り替えたため、サイズは小さいままasar無効で安定運用
+asar: false
+
+# macOS設定
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+  category: public.app-category.medical
+  icon: build/icon.icns
+  darkModeSupport: true
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+# DMG設定
+dmg:
+  title: "${productName}"
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+# Windows設定
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: build/icon.ico
+
+# Windows Store (AppX) 設定
+appx:
+  identityName: KyoshiroTajima.JudoTherapyRecord
+  publisher: CN=8BB29D3A-7DD6-415D-AE84-9EE75DE3E28B
+  publisherDisplayName: Kyoshiro Tajima
+  displayName: 柔整電子施術録
+  backgroundColor: "#1f4a7c"
+  languages:
+    - ja-JP
+    - en-US
+
+# NSISインストーラー設定
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "Judo Therapy Record"
+
+# Linux設定
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  category: Medical
+  icon: build/icons
+
+# 自動更新設定（GitHub Releases）
+publish:
+  provider: github
+  owner: mameshivaa
+  repo: v-oss
+  releaseType: release
+
+# 更新設定
+electronUpdaterCompatibility: ">=2.0.0"
+
+# ビルドフック
+afterSign: scripts/notarize.js
+
+# 追加リソース（SQLiteデータベース用）
+extraResources:
+  - from: prisma/schema.prisma
+    to: prisma/schema.prisma
+  - from: prisma/prisma/template.db
+    to: prisma/template.db
+
+# electron-updater を明示的に含める（MS Store/AppX でクラッシュ防止）
+extraFiles:
+  - from: node_modules/electron-updater
+    to: node_modules/electron-updater
+  - from: node_modules/@prisma/client
+    to: node_modules/@prisma/client
+  - from: node_modules/.prisma/client
+    to: node_modules/.prisma/client

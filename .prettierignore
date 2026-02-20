@@ -1,0 +1,17 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+electron-dist
+electron-build
+.next
+out
+
+# Local data/artifacts
+backups
+tmp
+
+# OS/files
+.DS_Store

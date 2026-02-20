@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>患者情報カード</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 15mm;
+      }
+      body {
+        font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+        font-size: 12pt;
+        line-height: 1.6;
+        color: #333;
+      }
+      .card {
+        border: 2px solid #333;
+        padding: 20px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .header {
+        text-align: center;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+      }
+      .header h1 {
+        font-size: 18pt;
+        margin: 0 0 5px 0;
+      }
+      .header .patient-number {
+        font-size: 14pt;
+        color: #666;
+      }
+      .info-section {
+        margin-bottom: 15px;
+      }
+      .info-row {
+        display: flex;
+        margin-bottom: 8px;
+      }
+      .info-label {
+        width: 100px;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+      .info-value {
+        flex: 1;
+      }
+      .footer {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #ccc;
+        font-size: 10pt;
+        color: #666;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="header">
+        <h1>{{name}}</h1>
+        <div class="patient-number">患者番号: {{patientNumber}}</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">フリガナ</span>
+          <span class="info-value">{{kana}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">生年月日</span>
+          <span class="info-value"
+            >{{formatDate birthDate "yyyy/MM/dd"}} ({{calculateAge
+            birthDate}}歳)</span
+          >
+        </div>
+        <div class="info-row">
+          <span class="info-label">性別</span>
+          <span class="info-value">{{formatGender gender}}</span>
+        </div>
+        {{#if phone}}
+        <div class="info-row">
+          <span class="info-label">電話番号</span>
+          <span class="info-value">{{phone}}</span>
+        </div>
+        {{/if}} {{#if address}}
+        <div class="info-row">
+          <span class="info-label">住所</span>
+          <span class="info-value">{{address}}</span>
+        </div>
+        {{/if}}
+      </div>
+
+      {{#if memo}}
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">備考</span>
+          <span class="info-value">{{memo}}</span>
+        </div>
+      </div>
+      {{/if}}
+
+      <div class="footer">
+        印刷日時: {{formatDate printedAt "yyyy/MM/dd HH:mm"}}
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,72 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build/*
+!/build/entitlements.mac.plist
+!/build/icon.icns
+!/build/icon.ico
+!/build/icon.png
+!/build/icons/
+!/build/icons/*.png
+!/build/appx/
+!/build/appx/*.png
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+.env.developer
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+/dev.db
+/dev.db-journal
+/prisma/dev.db
+/prisma/dev.db-journal
+/prisma/migrations
+/prisma/prisma/template.db
+/prisma/prisma/dev.db
+/prisma/prisma/dev.db.bak
+
+# Build outputs
+/dist
+/electron-dist
+
+# Local artifacts
+/.cursor
+/backups
+/tmp
+/tmp-backups-test
+/tsx
+/v-oss@0.1.0
+
+# Playwright
+/playwright-report
+/test-results
+/.playwright
