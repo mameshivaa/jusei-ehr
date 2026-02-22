@@ -4,7 +4,7 @@ import { logLogin } from "@/lib/activity-log";
 
 /**
  * Supabase Auth認証設定
- * Google OAuth認証を使用してSupabase Authで認証し、
+ * Supabase Authで認証し、
  * ローカルDBのUserテーブルと同期する
  */
 

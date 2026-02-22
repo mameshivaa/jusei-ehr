@@ -11,7 +11,7 @@ export class PersonalInfoEncryption {
       return Buffer.from(keyHex, "hex");
     }
     // 開発環境用（本番環境では必ず環境変数を設定すること）
-    const secret = process.env.NEXTAUTH_SECRET || "development-secret";
+    const secret = process.env.APP_SECURITY_SEED || "development-secret";
     return crypto.createHash("sha256").update(secret).digest();
   }
 

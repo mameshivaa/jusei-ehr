@@ -33,18 +33,9 @@ npm install
 # .env ファイルの作成
 if [ ! -f .env ]; then
     echo "⚙️  .env ファイルを作成中..."
-    
-    # NEXTAUTH_SECRET の生成
-    if command -v openssl &> /dev/null; then
-        NEXTAUTH_SECRET=$(openssl rand -base64 32)
-    else
-        NEXTAUTH_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
-    fi
-    
+
     cat > .env << EOF
 DATABASE_URL="file:./prisma/prisma/dev.db"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="${NEXTAUTH_SECRET}"
 
 # 開発モード: trueで認証・セットアップをスキップ
 DEV_BYPASS_AUTH="true"
@@ -79,4 +70,3 @@ echo ""
 echo "本番モードでテストする場合は .env の DEV_BYPASS_AUTH を false に変更してください。"
 echo ""
 echo -e "${RED}⚠️  本番環境では DEV_BYPASS_AUTH を削除または false に設定してください！${NC}"
-

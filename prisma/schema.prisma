@@ -30,7 +30,7 @@ model User {
   id           String    @id @default(cuid())
   email        String    @unique
   name         String
-  image        String?   // Googleアカウントの画像URL
+  image        String?   // プロフィール画像URL
   role         UserRole  @default(PRACTITIONER)
   
   // Supabase認証連携

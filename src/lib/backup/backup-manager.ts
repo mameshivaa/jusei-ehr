@@ -1142,7 +1142,7 @@ export async function restoreBackup(
 
         const key =
           process.env.PERSONAL_INFO_ENCRYPTION_KEY ||
-          process.env.NEXTAUTH_SECRET ||
+          process.env.APP_SECURITY_SEED ||
           "default-key";
         const keyBuffer = Buffer.from(key.slice(0, 32), "utf8");
         const decipher = crypto.createDecipheriv("aes-256-cbc", keyBuffer, iv);

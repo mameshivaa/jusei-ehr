@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     const envSettings = {
       nodeEnv: process.env.NODE_ENV || "development",
       databaseProvider: "SQLite",
-      authProvider: "NextAuth (Google OAuth)",
+      authProvider: "Local ID/Password",
       encryptionEnabled:
         !!process.env.PERSONAL_INFO_ENCRYPTION_KEY ||
         process.env.NODE_ENV === "development",
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
 
       // セキュリティ設定
       security: {
-        authMethod: "Google OAuth",
+        authMethod: "Local ID/Password",
         mfaEnabled: true,
         mfaRequired: false, // 将来的に設定可能に
         sessionExpiryDays: 30,

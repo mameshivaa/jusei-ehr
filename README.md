@@ -15,7 +15,7 @@
 - **フロントエンド/バックエンド**: Next.js 14 (App Router), React, TypeScript
 - **データベース**: SQLite
 - **ORM**: Prisma
-- **認証**: NextAuth.js
+- **認証**: ローカルID/パスワード認証
 - **スタイリング**: Tailwind CSS
 
 ## クイックスタート
@@ -53,12 +53,6 @@ cp .env.example .env
 **必須設定項目**:
 
 - `DATABASE_URL`: データベース接続URL（例: `file:./prisma/prisma/dev.db`）
-- `NEXTAUTH_SECRET`: NextAuth.jsの秘密鍵（`openssl rand -base64 32`で生成）
-- `NEXTAUTH_URL`: アプリケーションのURL（例: `http://localhost:3000`）
-- `GOOGLE_CLIENT_ID`: 開発者から提供されるGoogle OAuthクライアントID
-- `GOOGLE_CLIENT_SECRET`: 開発者から提供されるGoogle OAuthクライアントシークレット
-
-**注意**: `GOOGLE_CLIENT_ID`と`GOOGLE_CLIENT_SECRET`は、開発者側への登録後に提供されます。各導入者が独自にGoogle Cloud Consoleで設定する必要はありません。
 
 #### 3. データベースのセットアップ
 
@@ -104,7 +98,7 @@ npm run dev:free
 
 ## 使用開始について
 
-**重要**: v-ossは無料で公開されていますが、使用には開発者側への登録が必須です。
+**重要**: v-ossは無料で公開されていますが、使用条件の確認が必要です。
 
 ### 登録方法
 

@@ -50,14 +50,7 @@ npm install
 
 ```env
 DATABASE_URL="file:./prisma/prisma/dev.db"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"
-```
-
-`NEXTAUTH_SECRET` は以下のコマンドで生成できます：
-
-```bash
-openssl rand -base64 32
+PERSONAL_INFO_ENCRYPTION_KEY=""
 ```
 
 ### 4. データベースのセットアップ
@@ -81,14 +74,10 @@ npm run dev
 
 ブラウザで `http://localhost:3000` を開いてください。
 
-### 認証モードと運用フラグ
+### 認証運用フラグ
 
-- `NEXT_PUBLIC_AUTH_MODE`（デフォルト: `hybrid`）
-  - `google_strict`: 常時Google SSOのみ
-  - `hybrid`: 初回セットアップのみSSO必須。クリニック作成後はローカルID/PWも許可
-  - `local`: SSO不要。アプリDBのユーザーID/PWでログイン
 - ローカル認証のAPI: `POST /api/auth/login`（メール+パスワード）。ローカルセッションは30日有効。
-- ログアウト: `POST /api/auth/logout`（Supabaseセッションとローカルセッションを両方破棄）
+- ログアウト: `POST /api/auth/logout`（ローカルセッションを破棄）
 - 開発用スキップ: `DEV_BYPASS_AUTH=true` で認証を無効化（本番禁止）
 - 管理者によるパスワード設定/リセット: 設定 > ユーザー管理 から対象ユーザーを選び「パスワード再設定」。メール送信は行わず、入力したパスワードをbcryptハッシュで保存し失敗カウント/ロックを解除します（スタッフは簡易PW可・4文字以上、重要アカウントは強め推奨）。
 
@@ -143,7 +132,7 @@ npx prisma migrate reset
 1. **フロントエンド**: Next.js App Router を使用
 2. **API ルート**: `src/app/api/` に配置
 3. **データベース**: Prisma ORM を使用して SQLite にアクセス
-4. **認証**: NextAuth.js を使用
+4. **認証**: ローカルID/パスワード認証を使用
 
 ### 主要な設計原則
 
@@ -224,7 +213,7 @@ npm run type-check
 
 1. **環境変数**: 機密情報は `.env` に保存（`.gitignore` に含まれていることを確認）
 2. **入力検証**: Zod スキーマを使用してすべての入力を検証
-3. **認証**: NextAuth.js のセッション管理を適切に使用
+3. **認証**: ローカルセッション管理を適切に使用
 4. **SQL インジェクション**: Prisma を使用することで自動的に防止
 
 ## リリースプロセス
@@ -238,7 +227,6 @@ npm run type-check
 
 - [Next.js ドキュメント](https://nextjs.org/docs)
 - [Prisma ドキュメント](https://www.prisma.io/docs)
-- [NextAuth.js ドキュメント](https://next-auth.js.org/)
 - [TypeScript ドキュメント](https://www.typescriptlang.org/docs/)
 
 ## サポート

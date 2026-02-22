@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### 重要な注意事項
 
 - **登録必須**: v-ossは無料で公開されていますが、使用には開発者側への登録が必須です
-- **Google OAuth設定**: Google OAuth設定（`GOOGLE_CLIENT_ID`と`GOOGLE_CLIENT_SECRET`）は開発者側で一元管理されています。各導入者が独自にGoogle Cloud Consoleで設定する必要はありません
 - **電子カルテガイドライン準拠**: 厚生労働省の「医療情報システムの安全管理に関するガイドライン第6.0版」に準拠しています
 
 ## [0.1.0-dev] - 2024-12-03
@@ -25,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 初期リリース
 - SQLite データベースによるローカル完結型の電子カルテシステム
-- NextAuth.js による認証システム
+- ローカルID/パスワード認証システム
 - 患者管理機能（CRUD）
   - 患者一覧・検索
   - 新規患者登録
