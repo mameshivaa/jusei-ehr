@@ -6,8 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
-
-const isDevBypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 const docMap: Record<string, string> = {
   "docs-index": "docs/README.md",
@@ -24,8 +23,7 @@ const docMap: Record<string, string> = {
   "current-security-baseline": "docs/current/SECURITY_BASELINE.md",
   "current-incident-response-playbook":
     "docs/current/INCIDENT_RESPONSE_PLAYBOOK.md",
-  "current-document-control-policy":
-    "docs/current/DOCUMENT_CONTROL_POLICY.md",
+  "current-document-control-policy": "docs/current/DOCUMENT_CONTROL_POLICY.md",
   "current-document-template-standard":
     "docs/current/DOCUMENT_TEMPLATE_STANDARD.md",
   "current-traceability-matrix": "docs/current/TRACEABILITY_MATRIX.md",
@@ -38,8 +36,7 @@ const docMap: Record<string, string> = {
   "current-raci": "docs/current/RACI.md",
   "current-change-and-release-control":
     "docs/current/CHANGE_AND_RELEASE_CONTROL.md",
-  "current-quality-assurance-gates":
-    "docs/current/QUALITY_ASSURANCE_GATES.md",
+  "current-quality-assurance-gates": "docs/current/QUALITY_ASSURANCE_GATES.md",
   "current-vendor-handover-checklist":
     "docs/current/VENDOR_HANDOVER_CHECKLIST.md",
   "current-document-register": "docs/current/DOCUMENT_REGISTER.md",
@@ -52,10 +49,8 @@ const docMap: Record<string, string> = {
   "emergency-procedures": "docs/current/INCIDENT_RESPONSE_PLAYBOOK.md",
   "security-incident-response": "docs/current/INCIDENT_RESPONSE_PLAYBOOK.md",
   "user-guide": "docs/current/USER_OPERATION_GUIDE.md",
-  "responsibility-demarcation":
-    "docs/current/OUTSOURCED_MAINTENANCE_MODEL.md",
-  "service-specification-disclosure":
-    "docs/current/DOCUMENT_CONTROL_POLICY.md",
+  "responsibility-demarcation": "docs/current/OUTSOURCED_MAINTENANCE_MODEL.md",
+  "service-specification-disclosure": "docs/current/DOCUMENT_CONTROL_POLICY.md",
   "client-security": "docs/current/SECURITY_BASELINE.md",
   "server-security": "docs/current/SECURITY_BASELINE.md",
   "infrastructure-security": "docs/current/SECURITY_BASELINE.md",
@@ -81,7 +76,7 @@ export default async function DocCategoryPage({
   const user = await getCurrentUser();
 
   // 開発環境で認証をスキップする場合はスキップ
-  if (!isDevBypassAuth && !user) {
+  if (!isDevBypassAuthEnabled() && !user) {
     redirect("/auth/signin");
   }
 

@@ -1,4 +1,4 @@
-// 無料配布版 接骨院向け電子カルテ - Prismaスキーマ
+// Source-Available版 接骨院向け電子カルテ - Prismaスキーマ
 // ローカル1PC用、テナント不要のシンプル構成
 
 generator client {

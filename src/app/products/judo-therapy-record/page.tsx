@@ -139,7 +139,7 @@ export default function JudoTherapyRecordPage() {
           </Link>
 
           <p className="text-base font-semibold text-slate-500 uppercase tracking-wider">
-            無料配布版（ソース非公開）
+            Source-Available 公開版
           </p>
           <h1 className="mt-6 text-5xl font-bold leading-tight text-slate-900 md:text-7xl">
             柔整電子施術録
@@ -320,7 +320,7 @@ export default function JudoTherapyRecordPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-400 flex-shrink-0" />
-                <span>アップデートは配布版で対応</span>
+                <span>アップデートは公開版で対応</span>
               </li>
             </ul>
             <Button
@@ -331,7 +331,8 @@ export default function JudoTherapyRecordPage() {
               {isLoadingRelease ? "読み込み中..." : "ダウンロード"}
             </Button>
             <p className="mt-4 text-xs text-slate-500 text-center">
-              ※ 配布版のためソースコードは非公開です。
+              ※ この公開版は source-available です。利用条件は LICENSE
+              を確認してください。
             </p>
           </div>
         </div>
@@ -349,7 +350,7 @@ export default function JudoTherapyRecordPage() {
         <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 px-8 py-16 text-white">
           <h2 className="text-4xl font-bold">今すぐ始める</h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-slate-300">
-            必要十分な機能だけを、シンプルに。まずは無料配布版で体験してください。
+            必要十分な機能だけを、シンプルに。まずは公開版を試してください。
           </p>
           <Button
             size="lg"

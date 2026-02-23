@@ -2,13 +2,13 @@
   "name": "v-oss",
   "version": "0.1.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "LicenseRef-V-SAL-1.0",
   "main": "electron-dist/main.js",
   "author": {
     "name": "v-oss",
     "email": "support@v-oss.example.com"
   },
-  "description": "接骨院向け電子カルテシステム - デスクトップアプリケーション",
+  "description": "接骨院向け電子カルテシステム（Source-Available）",
   "scripts": {
     "dev": "next dev",
     "dev:free": "DEV_BYPASS_AUTH=true next dev",

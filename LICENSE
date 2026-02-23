@@ -1,30 +1,42 @@
-V Free Application License (Binary-Only)
-Version 1.0 — 2025-12-05
+V Source-Available License 1.0
+Version 1.0 — 2026-02-23
 
-Copyright (c) 2025 All Rights Reserved.
+Copyright (c) 2026 V-OSS Contributors
 
-1. Grant of Use
-   - You may install and use the compiled application (the “Software”) for your clinic’s internal operations without charge.
-   - This license does not grant any rights to the source code.
+1. Definitions
+   - "Software" means this repository and its source code, documentation, and related files.
+   - "You" means an individual or legal entity exercising permissions under this license.
 
-2. Restrictions
-   - You may not redistribute, sublicense, sell, rent, lease, or make the Software available to third parties.
-   - You may not modify, reverse engineer, decompile, or disassemble the Software except where such restriction is prohibited by law.
-   - You may not remove or alter copyright notices or license terms.
+2. Grant of Rights
+   Subject to this license, You may:
+   - use the Software for internal operations;
+   - read, modify, and build the Software;
+   - share unmodified or modified copies of the Software with this license and copyright notice intact.
 
-3. Ownership
-   - All intellectual property rights in and to the Software and accompanying materials remain with the copyright holder.
+3. Commercial and Hosted Use Restriction
+   Without separate written permission from the copyright holder, You may not:
+   - sell, sublicense, or provide paid support contracts for the Software itself;
+   - offer the Software (modified or unmodified) as a managed/hosted service to third parties;
+   - embed the Software as a core component of a commercial product distributed to third parties.
 
-4. Warranty Disclaimer
-   - THE SOFTWARE IS PROVIDED “AS IS” WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+4. Attribution and Notice
+   - You must retain this license text and copyright notices in source distributions.
+   - Modified versions must clearly indicate that changes were made.
 
-5. Limitation of Liability
-   - TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM USE OF THE SOFTWARE, INCLUDING DIRECT, INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES.
+5. Compliance and Responsibility
+   - You are solely responsible for compliance with applicable laws and regulations, including medical and privacy requirements in your jurisdiction.
 
-6. Termination
-   - This license terminates automatically if you fail to comply with its terms. Upon termination, you must cease all use of the Software and delete all copies in your possession.
+6. No Warranty
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
-7. Governing Law
-   - This license is governed by the laws of Japan. Any disputes shall be resolved in the courts located in Tokyo, Japan.
+7. Limitation of Liability
+   TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER AND CONTRIBUTORS SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM USE OF THE SOFTWARE.
 
-For distribution or commercial inquiries, please contact the developer team.
+8. Termination
+   This license terminates automatically if You violate its terms. Upon termination, You must stop using and distributing the Software until compliance is restored.
+
+9. Governing Law
+   This license is governed by the laws of Japan. Any disputes shall be resolved in the courts located in Tokyo, Japan.
+
+10. Contact
+   For commercial licensing or permission requests, contact the repository maintainers.

@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import DownloadLandingClient from "./landing/LandingClient";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
-const isDevBypassAuth = process.env.DEV_BYPASS_AUTH === "true";
 const isElectronBuild = process.env.ELECTRON_BUILD === "true";
 const isElectronRuntime = process.env.ELECTRON_RUNTIME === "true";
 
@@ -14,7 +14,7 @@ export default async function Home() {
   }
 
   // 開発環境で認証をスキップする場合はセットアップもスキップ
-  if (isDevBypassAuth) {
+  if (isDevBypassAuthEnabled()) {
     // 開発用ダミークリニックを自動作成
     const clinic = await prisma.clinic.findFirst();
     if (!clinic) {

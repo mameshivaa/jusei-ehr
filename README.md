@@ -1,4 +1,4 @@
-# V-OSS - 接骨院向け電子カルテ（無料配布版）
+# V-OSS - 接骨院向け電子カルテ（Source-Available版）
 
 ローカル1PCで動作する接骨院向けのシンプルな電子カルテシステムです。
 
@@ -8,7 +8,7 @@
 - **シンプルな認証**: ユーザー管理とロールベースアクセス制御
 - **患者管理**: 患者情報の登録・検索・編集
 - **施術記録**: SOAP形式での施術記録作成・管理
-- **無料配布**: アプリを無償提供（利用条件は `LICENSE` を参照）
+- **Source-Available**: ソース公開済み（利用条件は `LICENSE` を参照）
 
 ## 技術スタック
 
@@ -53,6 +53,7 @@ cp .env.example .env
 **必須設定項目**:
 
 - `DATABASE_URL`: データベース接続URL（例: `file:./prisma/prisma/dev.db`）
+- `APP_SECRET`: 本番運用時に必須のアプリケーション秘密鍵
 
 #### 3. データベースのセットアップ
 
@@ -96,15 +97,15 @@ npm run dev:free
 
 詳細は [docs/current/USER_OPERATION_GUIDE.md](./docs/current/USER_OPERATION_GUIDE.md) を参照してください。
 
-## 使用開始について
+## 利用条件について
 
-**重要**: v-ossは無料で公開されていますが、使用条件の確認が必要です。
+**重要**: 本リポジトリは source-available で公開しています。利用・改変・再配布時は `LICENSE` の条件を確認してください。
 
-### 登録方法
+### 利用開始までの流れ
 
-1. 開発者に連絡して登録申請を行ってください
-2. 配布時の運用手順に従ってセットアップを実施してください
-3. 必要な環境変数を`.env`に設定してください
+1. `LICENSE` を確認し、想定する利用形態が許諾範囲内であることを確認する
+2. 本READMEの手順でローカルセットアップを実施する
+3. 本番運用前に `docs/current/DEPLOYMENT_BASELINE.md` を確認する
 
 ## ログイン方法
 
@@ -189,15 +190,9 @@ npm run format
 npm run lint
 ```
 
-## ライセンス
-
-V Free Application License (Binary-Only)
-
-詳細は [LICENSE](./LICENSE) を参照してください。
-
 ## スコープ外（意図的に含めていません）
 
-以下の機能は、無料配布版には含まれていません：
+以下の機能は、source-available 公開版には含まれていません：
 
 - ライセンス認証 / 課金 / 契約管理
 - クラウド同期・監視・ログエクスポート
@@ -208,7 +203,7 @@ V Free Application License (Binary-Only)
 - 請求計算
 - 予約システム
 
-## 配布前チェック（無料配布版利用者向けの安全ガイド）
+## 配布前チェック（source-available 版の安全ガイド）
 
 - 必ずMFAを有効化し、本番では `mfaRequired=true` にする
 - emergency/API と SystemSettings 更新系はリバプロで院内IPに制限する
@@ -218,7 +213,7 @@ V Free Application License (Binary-Only)
 
 ## コントリビューション
 
-本無料配布版では外部からのプルリクエストやIssue投稿を受け付けていません。問い合わせ方法は [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
+Issue / Pull Request を受け付けています。詳細は [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
 
 ## 開発者向けドキュメント
 
@@ -244,4 +239,4 @@ V Free Application License (Binary-Only)
 
 ## ライセンス
 
-このプロジェクトは [V Free Application License (Binary-Only)](./LICENSE) の条件で配布されています。
+このプロジェクトは [V Source-Available License 1.0](./LICENSE) の条件で配布されています。

@@ -181,7 +181,7 @@ export default function LandingClient() {
         <div className="mt-12 rounded-2xl bg-white p-8 md:p-12 transition-all hover:shadow-xl border border-slate-100">
           <div className="text-center">
             <p className="text-base font-semibold text-slate-500">
-              無料配布版（ソース非公開）
+              Source-Available 公開版
             </p>
             <h4 className="mt-4 text-3xl font-semibold leading-tight text-slate-900 md:text-4xl">
               柔整電子施術録

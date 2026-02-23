@@ -7,6 +7,10 @@ import { DiskEncryptionGuide } from "@/components/setup/DiskEncryptionGuide";
 import { OperationsConfirmation } from "@/components/setup/OperationsConfirmation";
 import { BackupSettings } from "@/components/setup/BackupSettings";
 import { Select } from "@/components/ui/Select";
+import {
+  getPasswordPolicyErrors,
+  PASSWORD_POLICY_HINT,
+} from "@/lib/security/password-policy";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -194,6 +198,11 @@ export default function SetupPage() {
       }
       if (!password) {
         errors.adminPassword = "パスワードを入力してください";
+      } else {
+        const passwordPolicyErrors = getPasswordPolicyErrors(password);
+        if (passwordPolicyErrors.length > 0) {
+          errors.adminPassword = passwordPolicyErrors[0];
+        }
       }
       if (!passwordConfirm) {
         errors.adminPasswordConfirm = "確認用パスワードを入力してください";
@@ -1148,7 +1157,7 @@ export default function SetupPage() {
                                   }}
                                   required
                                   className={getInputClassName("adminPassword")}
-                                  placeholder="例: 4321"
+                                  placeholder="例: ClinicAdmin2026"
                                   autoComplete="new-password"
                                 />
                               </div>
@@ -1179,6 +1188,9 @@ export default function SetupPage() {
                             </div>
                             <p className="text-sm font-semibold text-slate-900">
                               重要：このIDとパスワードはログイン時に毎回使用します。この後のログインでも必要です。
+                            </p>
+                            <p className="text-xs text-slate-600">
+                              {PASSWORD_POLICY_HINT}
                             </p>
                           </div>
                         </div>

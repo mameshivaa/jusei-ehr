@@ -5,6 +5,7 @@ import { requireApiPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, getAuditLogData } from "@/lib/audit";
 import { ACTIVE_CHART_STATUS, normalizeChartStatus } from "@/lib/charts/status";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = requestSchema.parse(body);
 
-    if (process.env.DEV_BYPASS_AUTH !== "true") {
+    if (!isDevBypassAuthEnabled()) {
       const operator = await prisma.user.findUnique({
         where: { id: user.id },
         select: { id: true },

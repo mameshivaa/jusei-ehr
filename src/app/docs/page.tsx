@@ -11,8 +11,7 @@ import {
   Network,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-
-const isDevBypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 export const dynamic = "force-dynamic";
 
 export default async function DocsPage() {
@@ -25,7 +24,7 @@ export default async function DocsPage() {
   const user = await getCurrentUser();
 
   // 開発環境で認証をスキップする場合はスキップ
-  if (!isDevBypassAuth && !user) {
+  if (!isDevBypassAuthEnabled() && !user) {
     redirect("/auth/signin");
   }
 

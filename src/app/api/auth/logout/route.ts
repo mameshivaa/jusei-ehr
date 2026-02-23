@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { logLogout } from "@/lib/activity-log";
 import { clearLocalSessionCookie } from "@/lib/auth/local-session";
@@ -16,7 +15,6 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
-    const supabase = await createClient();
     const cookieStore = cookies();
     const localSessionToken = cookieStore.get(LOCAL_SESSION_COOKIE)?.value;
 
@@ -34,9 +32,6 @@ export async function POST(request: NextRequest) {
     }
 
     const response = NextResponse.json({ success: true });
-
-    // Supabaseセッションを無効化
-    await supabase.auth.signOut();
 
     // ローカルセッションを無効化
     if (localSessionToken) {

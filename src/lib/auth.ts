@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getLocalSessionUser } from "@/lib/auth/local-session";
-
-// 開発環境で認証をスキップするかどうか
-const isDevBypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 // 開発環境用のダミーユーザー
 const DEV_USER = {
@@ -52,7 +50,7 @@ export class AuthError extends Error {
  */
 export async function getCurrentUser() {
   // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+  const bypassAuth = isDevBypassAuthEnabled();
   if (bypassAuth) {
     await ensureDevUserExists();
     return DEV_USER;
@@ -122,7 +120,7 @@ async function checkUserStatus(userId: string): Promise<void> {
  */
 export async function requireAuth() {
   // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+  const bypassAuth = isDevBypassAuthEnabled();
   if (bypassAuth) {
     await ensureDevUserExists();
     return DEV_USER;
@@ -144,7 +142,7 @@ export async function requireAuth() {
  */
 export async function requireRole(role: string) {
   // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+  const bypassAuth = isDevBypassAuthEnabled();
   if (bypassAuth) {
     await ensureDevUserExists();
     return DEV_USER;
@@ -162,7 +160,7 @@ export async function requireRole(role: string) {
  */
 export async function requireAnyRole(roles: string[]) {
   // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+  const bypassAuth = isDevBypassAuthEnabled();
   if (bypassAuth) {
     await ensureDevUserExists();
     return DEV_USER;
