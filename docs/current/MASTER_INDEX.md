@@ -36,12 +36,14 @@
 ## 2. 役割別の必読セット
 
 院内運用責任者:
+
 - `docs/current/OPERATIONS.md`
 - `docs/current/USER_OPERATION_GUIDE.md`
 - `docs/current/RACI.md`
 - `docs/current/OUTSOURCED_MAINTENANCE_MODEL.md`
 
 開発者:
+
 - `docs/current/ARCHITECTURE.md`
 - `docs/current/DATA_MODEL.md`
 - `docs/current/API_SURFACE.md`
@@ -50,6 +52,7 @@
 - `docs/current/QUALITY_ASSURANCE_GATES.md`
 
 外部委託先（保守ベンダー）:
+
 - `docs/current/OUTSOURCED_MAINTENANCE_MODEL.md`
 - `docs/current/VENDOR_HANDOVER_CHECKLIST.md`
 - `docs/current/CHANGE_AND_RELEASE_CONTROL.md`
@@ -57,6 +60,7 @@
 - `docs/current/RACI.md`
 
 監査/セキュリティ担当:
+
 - `docs/current/DOCUMENT_CONTROL_POLICY.md`
 - `docs/current/AUDIT_READINESS.md`
 - `docs/current/TRACEABILITY_MATRIX.md`

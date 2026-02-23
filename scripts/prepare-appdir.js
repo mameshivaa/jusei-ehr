@@ -37,9 +37,7 @@ const ELECTRON_RUNTIME_DEPS = [
 const runtimeDeps = { ...(rootPkg.dependencies || {}) };
 for (const name of ELECTRON_RUNTIME_DEPS) {
   const ver =
-    rootPkg.dependencies?.[name] ??
-    rootPkg.devDependencies?.[name] ??
-    "*";
+    rootPkg.dependencies?.[name] ?? rootPkg.devDependencies?.[name] ?? "*";
   runtimeDeps[name] = ver;
 }
 
@@ -94,7 +92,9 @@ function copyModule(name) {
 
   const src = path.join(rootModules, ...name.split("/"));
   if (!fs.existsSync(src)) {
-    console.warn(`[prepare-appdir] WARNING: ${name} not found in root node_modules, skipping`);
+    console.warn(
+      `[prepare-appdir] WARNING: ${name} not found in root node_modules, skipping`,
+    );
     return;
   }
 

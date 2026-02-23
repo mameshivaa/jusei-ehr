@@ -22,7 +22,7 @@ export async function GET() {
       app: {
         name: packageJson.name,
         version: packageJson.version,
-        description: "無料配布版 接骨院向け電子カルテシステム（ソース非公開）",
+        description: "Source-Available版 接骨院向け電子カルテシステム",
       },
 
       // ランタイム情報

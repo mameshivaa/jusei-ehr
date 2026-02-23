@@ -7,6 +7,8 @@ import { hashRecoveryCode } from "@/lib/security/recovery-code";
 import { getPrivacyDocument, getTermsDocument } from "@/lib/terms-version";
 import { ensureBackupDirectory } from "@/lib/backup/backup-manager";
 import { getDefaultBackupDirectory } from "@/lib/backup/default-backup-dir";
+import { PersonalInfoEncryption } from "@/lib/security/encryption";
+import { getPasswordPolicyErrors } from "@/lib/security/password-policy";
 import { ConsentType } from "@prisma/client";
 
 const setupSchema = z.object({
@@ -33,7 +35,7 @@ const setupSchema = z.object({
     role: z.string().min(1, "管理者の役職は必須です"),
     name: z.string().min(1, "管理者名は必須です"),
     identifier: z.string().min(1, "管理者IDは必須です"),
-    password: z.string().min(4, "パスワードは4文字以上にしてください"),
+    password: z.string().min(1, "パスワードを入力してください"),
   }),
   backup: z.object({
     directory: z.string().optional().default(""), // 空文字列の場合はデフォルト値を使用
@@ -54,8 +56,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = setupSchema.parse(body);
+    const passwordPolicyErrors = getPasswordPolicyErrors(
+      validatedData.admin.password,
+    );
+    if (passwordPolicyErrors.length > 0) {
+      return NextResponse.json(
+        { error: passwordPolicyErrors[0] },
+        { status: 400 },
+      );
+    }
 
     const backupSecret = validatedData.backup.secret.trim();
+    const encryptedBackupSecret = PersonalInfoEncryption.encrypt(backupSecret);
     const recoveryCode = validatedData.recoveryCode?.trim();
     const recoveryCodeHash = validatedData.recoveryCodeHash?.trim();
     const effectiveRecoveryCodeHash =
@@ -188,7 +200,7 @@ export async function POST(request: NextRequest) {
         },
         {
           key: "backupSecret",
-          value: backupSecret,
+          value: encryptedBackupSecret,
           description: "Backup secret",
         },
         {

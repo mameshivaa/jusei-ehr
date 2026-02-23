@@ -3,10 +3,13 @@ import { requireRole } from "@/lib/auth";
 import { resetUserPassword } from "@/lib/security/account-manager";
 import { z } from "zod";
 import { logFeatureAction } from "@/lib/activity-log";
+import {
+  getPasswordPolicyErrors,
+  PASSWORD_MAX_LENGTH,
+} from "@/lib/security/password-policy";
 
 const passwordSchema = z.object({
-  // スタッフ用は簡易パスワードを許容（最低4文字、上限128）
-  password: z.string().min(4).max(128),
+  password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
 });
 
 /**
@@ -28,6 +31,13 @@ export async function PUT(
 
     const body = await request.json();
     const { password } = passwordSchema.parse(body);
+    const passwordPolicyErrors = getPasswordPolicyErrors(password);
+    if (passwordPolicyErrors.length > 0) {
+      return NextResponse.json(
+        { error: passwordPolicyErrors[0] },
+        { status: 400 },
+      );
+    }
 
     await resetUserPassword(params.id, password, admin.id);
 

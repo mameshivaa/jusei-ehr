@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
-
-// 開発環境で認証をスキップするかどうか
-const isDevBypassAuth = process.env.DEV_BYPASS_AUTH === "true";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 /**
  * RBAC（ロールベースアクセス制御）（ガイドライン準拠）
@@ -343,7 +341,7 @@ export async function requireApiPermission(
   action: Action,
 ): Promise<void> {
   // 開発環境で認証をスキップする場合、ADMINとして扱う
-  if (isDevBypassAuth && userId === "dev-user") {
+  if (isDevBypassAuthEnabled() && userId === "dev-user") {
     if (!hasPermission("ADMIN", resource, action)) {
       throw new Error(
         `権限が不足しています: ${resource} に対する ${action} 権限がありません`,

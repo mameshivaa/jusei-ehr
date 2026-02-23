@@ -10,8 +10,17 @@ export class PersonalInfoEncryption {
     if (keyHex && /^[0-9a-fA-F]{64}$/.test(keyHex)) {
       return Buffer.from(keyHex, "hex");
     }
-    // 開発環境用（本番環境では必ず環境変数を設定すること）
-    const secret = process.env.APP_SECURITY_SEED || "development-secret";
+
+    const secret =
+      process.env.APP_SECRET ||
+      process.env.APP_SECURITY_SEED ||
+      (process.env.NODE_ENV === "production" ? "" : "development-secret");
+    if (!secret) {
+      throw new Error(
+        "Encryption key is not configured. Set PERSONAL_INFO_ENCRYPTION_KEY or APP_SECRET.",
+      );
+    }
+
     return crypto.createHash("sha256").update(secret).digest();
   }
 

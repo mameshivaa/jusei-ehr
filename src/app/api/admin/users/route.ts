@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/security/password";
 import { logFeatureAction } from "@/lib/activity-log";
 import { createAuditLog, getAuditLogData } from "@/lib/audit";
+import { getPasswordPolicyErrors } from "@/lib/security/password-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -76,28 +77,45 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, email, password, role } = body;
 
-    if (!name || !email || !password) {
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "氏名・ログインID・パスワードは必須です" },
+        { status: 400 },
+      );
+    }
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const passwordText = password.trim();
+
+    if (!normalizedName || !normalizedEmail || !passwordText) {
       return NextResponse.json(
         { error: "氏名・ログインID・パスワードは必須です" },
         { status: 400 },
       );
     }
 
-    if (email.length < 4) {
+    if (normalizedEmail.length < 4) {
       return NextResponse.json(
         { error: "ログインIDは4文字以上にしてください" },
         { status: 400 },
       );
     }
 
-    if (password.length < 4) {
+    const passwordPolicyErrors = getPasswordPolicyErrors(passwordText);
+    if (passwordPolicyErrors.length > 0) {
       return NextResponse.json(
-        { error: "パスワードは4文字以上にしてください" },
+        { error: passwordPolicyErrors[0] },
         { status: 400 },
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
     if (existing) {
       return NextResponse.json(
         { error: "このログインIDは既に登録されています" },
@@ -118,12 +136,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(passwordText);
 
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: normalizedName,
+        email: normalizedEmail,
         passwordHash: hashedPassword,
         role: requestedRole,
         status: "ACTIVE",

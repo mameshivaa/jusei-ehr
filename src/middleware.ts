@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { LOCAL_SESSION_COOKIE } from "@/lib/config/env";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 /**
  * ミドルウェア（ガイドライン準拠：セキュリティ制御）
@@ -73,6 +74,7 @@ const withCsp = (response: NextResponse, pathname: string) => {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const bypassAuth = isDevBypassAuthEnabled();
 
   // 静的ファイルは無視
   if (
@@ -87,7 +89,7 @@ export async function middleware(request: NextRequest) {
 
   // ルートアクセスは認証済みならホームへリダイレクト
   if (isRootPath) {
-    if (process.env.DEV_BYPASS_AUTH === "true") {
+    if (bypassAuth) {
       return withCsp(
         NextResponse.redirect(new URL("/home", request.url)),
         pathname,
@@ -120,7 +122,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 開発環境で認証をスキップする場合
-  if (process.env.DEV_BYPASS_AUTH === "true") {
+  if (bypassAuth) {
     // 読み取り専用モードのチェックはスキップしない
     return withCsp(await checkReadOnlyMode(request), pathname);
   }

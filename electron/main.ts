@@ -290,7 +290,6 @@ async function createWindow() {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
-
 }
 
 function getMainServerOrigin(): string {
@@ -717,7 +716,6 @@ async function performShutdown(reason: string): Promise<void> {
         }
       }
     }
-
   } finally {
     if (!shouldQuit) {
       isShutdownInProgress = false;

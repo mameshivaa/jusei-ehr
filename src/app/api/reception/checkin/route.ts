@@ -8,6 +8,7 @@ import { getOrCreateDefaultChart } from "@/lib/charts/get-default-chart";
 import { ACTIVE_CHART_STATUS, normalizeChartStatus } from "@/lib/charts/status";
 import { logEvent, logFeatureAction } from "@/lib/activity-log";
 import { getJstDayRangeFromDate } from "@/lib/utils/date";
+import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 export const dynamic = "force-dynamic";
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (process.env.DEV_BYPASS_AUTH !== "true") {
+    if (!isDevBypassAuthEnabled()) {
       const audit = getAuditLogData(
         request,
         user.id,
@@ -166,7 +167,7 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.visit.delete({ where: { id: visitId } });
 
-    if (process.env.DEV_BYPASS_AUTH !== "true") {
+    if (!isDevBypassAuthEnabled()) {
       const audit = getAuditLogData(
         request,
         user.id,
