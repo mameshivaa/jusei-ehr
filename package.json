@@ -10,6 +10,7 @@
   },
   "description": "接骨院向け電子カルテシステム（Source-Available）",
   "scripts": {
+    "guard:ci": "node scripts/ci-guard.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
