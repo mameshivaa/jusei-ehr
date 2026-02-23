@@ -27,6 +27,9 @@ jobs:
         env:
           DATABASE_URL: "file:./prisma/test.db"
 
+      - name: Guard source-available policy
+        run: npm run guard:ci
+
       - name: Run linter
         run: npm run lint
 
