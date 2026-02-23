@@ -19,14 +19,17 @@
 ## 3. 文書分類
 
 Tier A（統制/契約/運用基準）:
+
 - 変更時は承認2者（Tech Lead + Security Officer）
 - 例: RACI, 委託運用モデル, 変更管理, 品質ゲート
 
 Tier B（技術仕様）:
+
 - 変更時は承認1者以上（Tech Leadまたは指名レビュア）
 - 例: Architecture, Data Model, API Surface
 
 Tier C（参考/履歴）:
+
 - 参照用。更新は任意
 - 例: 旧版移行メモ、作業記録（公開版に同梱しない資料を含む）
 

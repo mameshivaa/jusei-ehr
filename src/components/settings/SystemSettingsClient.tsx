@@ -7,11 +7,7 @@ type Clinic = {
   id: string;
 };
 
-export function SystemSettingsClient({
-  clinic: _clinic,
-}: {
-  clinic: Clinic;
-}) {
+export function SystemSettingsClient({ clinic: _clinic }: { clinic: Clinic }) {
   return (
     <div className="space-y-8">
       {/* システム文書へのリンク */}

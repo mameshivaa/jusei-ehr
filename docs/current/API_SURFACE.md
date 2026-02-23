@@ -7,6 +7,7 @@
 ## 主要APIグループ
 
 業務データ:
+
 - `/api/patients`
 - `/api/charts`
 - `/api/visits`
@@ -17,6 +18,7 @@
 - `/api/records/templates`
 
 認証・管理:
+
 - `/api/auth/*`
 - `/api/admin/*`
 - `/api/me`
@@ -24,6 +26,7 @@
 - `/api/setup`, `/api/setup/status`
 
 運用:
+
 - `/api/backup/*`
 - `/api/audit-logs/*`
 - `/api/system/*`
@@ -31,6 +34,7 @@
 - `/api/sync/*`
 
 拡張・外部:
+
 - `/api/extensions/*`
 - `/api/marketplace/*`
 - `/api/import/*`
@@ -78,7 +82,9 @@
 - `POST /v1/rollback`
 
 契約型:
+
 - `sync-contract/src/index.ts`
 
 本体側クライアント:
+
 - `src/lib/sync-agent/client.ts`

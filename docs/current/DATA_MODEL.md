@@ -11,6 +11,7 @@
 ## 主要モデル
 
 業務中核:
+
 - `Patient`
 - `Chart`
 - `Visit`
@@ -20,6 +21,7 @@
 - `ProcedureMaster`
 
 運用・セキュリティ:
+
 - `User`, `UserSession`
 - `AuditLog`, `PermissionChangeLog`
 - `LoginAttempt`, `EmergencyLog`
