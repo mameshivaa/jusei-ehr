@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
-import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 const docMap: Record<string, string> = {
   "docs-index": "docs/README.md",
@@ -75,8 +74,7 @@ export default async function DocCategoryPage({
 
   const user = await getCurrentUser();
 
-  // 開発環境で認証をスキップする場合はスキップ
-  if (!isDevBypassAuthEnabled() && !user) {
+  if (!user) {
     redirect("/auth/signin");
   }
 

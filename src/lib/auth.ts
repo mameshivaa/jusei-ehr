@@ -1,33 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getLocalSessionUser } from "@/lib/auth/local-session";
-import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
-
-// 開発環境用のダミーユーザー
-const DEV_USER = {
-  id: "dev-user",
-  email: "dev-user@local.dev",
-  name: "開発ユーザー",
-  role: "ADMIN" as const,
-  status: "ACTIVE" as const,
-};
-
-async function ensureDevUserExists() {
-  try {
-    await prisma.user.upsert({
-      where: { id: DEV_USER.id },
-      update: {},
-      create: {
-        id: DEV_USER.id,
-        email: DEV_USER.email,
-        name: DEV_USER.name,
-        role: DEV_USER.role,
-        status: DEV_USER.status,
-      },
-    });
-  } catch (e) {
-    console.error("ensureDevUserExists failed", e);
-  }
-}
 
 // 認証エラーの種類
 export class AuthError extends Error {
@@ -49,13 +21,6 @@ export class AuthError extends Error {
  * 現在のユーザーを取得（認証チェックなし）
  */
 export async function getCurrentUser() {
-  // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = isDevBypassAuthEnabled();
-  if (bypassAuth) {
-    await ensureDevUserExists();
-    return DEV_USER;
-  }
-
   const localUser = await getLocalSessionUser();
   if (localUser) {
     return {
@@ -119,13 +84,6 @@ async function checkUserStatus(userId: string): Promise<void> {
  * 認証を要求（ガイドライン準拠：アカウント状態も確認）
  */
 export async function requireAuth() {
-  // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = isDevBypassAuthEnabled();
-  if (bypassAuth) {
-    await ensureDevUserExists();
-    return DEV_USER;
-  }
-
   const user = await getCurrentUser();
   if (!user) {
     throw new AuthError("認証が必要です", "UNAUTHENTICATED");
@@ -141,13 +99,6 @@ export async function requireAuth() {
  * 特定のロールを要求（ガイドライン準拠：権限チェック）
  */
 export async function requireRole(role: string) {
-  // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = isDevBypassAuthEnabled();
-  if (bypassAuth) {
-    await ensureDevUserExists();
-    return DEV_USER;
-  }
-
   const user = await requireAuth();
   if (user.role !== role && user.role !== "ADMIN") {
     throw new AuthError("権限が不足しています", "FORBIDDEN");
@@ -159,13 +110,6 @@ export async function requireRole(role: string) {
  * 複数のロールのいずれかを要求
  */
 export async function requireAnyRole(roles: string[]) {
-  // 開発環境で認証をスキップする場合（実行時に毎回チェック）
-  const bypassAuth = isDevBypassAuthEnabled();
-  if (bypassAuth) {
-    await ensureDevUserExists();
-    return DEV_USER;
-  }
-
   const user = await requireAuth();
   if (!roles.includes(user.role) && user.role !== "ADMIN") {
     throw new AuthError("権限が不足しています", "FORBIDDEN");

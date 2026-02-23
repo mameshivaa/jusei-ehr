@@ -8,7 +8,6 @@ import { getOrCreateDefaultChart } from "@/lib/charts/get-default-chart";
 import { ACTIVE_CHART_STATUS, normalizeChartStatus } from "@/lib/charts/status";
 import { logEvent, logFeatureAction } from "@/lib/activity-log";
 import { getJstDayRangeFromDate } from "@/lib/utils/date";
-import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 export const dynamic = "force-dynamic";
 
@@ -102,23 +101,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!isDevBypassAuthEnabled()) {
-      const audit = getAuditLogData(
-        request,
-        user.id,
-        "CREATE",
-        "VISIT",
-        visit.id,
-      );
-      await createAuditLog({
-        ...audit,
-        action: "CREATE",
-        entityType: "VISIT",
-        entityId: visit.id,
-        category: "DATA_MODIFICATION",
-        metadata: { patientId: input.patientId, visitDate: visit.visitDate },
-      }).catch((e) => console.error("audit log failed", e));
-    }
+    const audit = getAuditLogData(
+      request,
+      user.id,
+      "CREATE",
+      "VISIT",
+      visit.id,
+    );
+    await createAuditLog({
+      ...audit,
+      action: "CREATE",
+      entityType: "VISIT",
+      entityId: visit.id,
+      category: "DATA_MODIFICATION",
+      metadata: { patientId: input.patientId, visitDate: visit.visitDate },
+    }).catch((e) => console.error("audit log failed", e));
 
     await Promise.all([
       logEvent("CRUD", { entity: "VISIT", action: "CREATE" }, user.id),
@@ -167,26 +164,18 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.visit.delete({ where: { id: visitId } });
 
-    if (!isDevBypassAuthEnabled()) {
-      const audit = getAuditLogData(
-        request,
-        user.id,
-        "DELETE",
-        "VISIT",
-        visitId,
-      );
-      await createAuditLog({
-        ...audit,
-        action: "DELETE",
-        entityType: "VISIT",
-        entityId: visitId,
-        category: "DATA_MODIFICATION",
-        metadata: {
-          patientId: existing.patientId,
-          visitDate: existing.visitDate,
-        },
-      }).catch((e) => console.error("audit log failed", e));
-    }
+    const audit = getAuditLogData(request, user.id, "DELETE", "VISIT", visitId);
+    await createAuditLog({
+      ...audit,
+      action: "DELETE",
+      entityType: "VISIT",
+      entityId: visitId,
+      category: "DATA_MODIFICATION",
+      metadata: {
+        patientId: existing.patientId,
+        visitDate: existing.visitDate,
+      },
+    }).catch((e) => console.error("audit log failed", e));
 
     await Promise.all([
       logEvent("CRUD", { entity: "VISIT", action: "DELETE" }, user.id),

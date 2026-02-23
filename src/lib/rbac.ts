@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
-import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 /**
  * RBAC（ロールベースアクセス制御）（ガイドライン準拠）
@@ -340,16 +339,6 @@ export async function requireApiPermission(
   resource: Resource,
   action: Action,
 ): Promise<void> {
-  // 開発環境で認証をスキップする場合、ADMINとして扱う
-  if (isDevBypassAuthEnabled() && userId === "dev-user") {
-    if (!hasPermission("ADMIN", resource, action)) {
-      throw new Error(
-        `権限が不足しています: ${resource} に対する ${action} 権限がありません`,
-      );
-    }
-    return;
-  }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { role: true, status: true },

@@ -38,7 +38,6 @@
 - ユーザーロール: `ADMIN`, `PRACTITIONER`, `RECEPTION`
 - ローカルセッションCookieを用いた認証維持
 - MFA関連APIあり
-- 開発時は `DEV_BYPASS_AUTH=true` で認証バイパス可能
 
 ## スコープ上の注意
 

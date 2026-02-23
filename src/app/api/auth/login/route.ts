@@ -8,7 +8,6 @@ import {
 } from "@/lib/security/account-manager";
 import { setLocalSessionCookie } from "@/lib/auth/local-session";
 import { logLogin } from "@/lib/activity-log";
-import { ensureDevAdmin } from "@/lib/dev/ensure-dev-admin";
 
 const IDENTIFIER_MAX = 320;
 const PASSWORD_MAX = 256;
@@ -22,8 +21,6 @@ function getClientIp(request: NextRequest): string | undefined {
 }
 
 export async function POST(request: NextRequest) {
-  await ensureDevAdmin();
-
   let body: { identifier?: unknown; email?: unknown; password?: unknown };
   try {
     body = await request.json();
