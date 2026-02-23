@@ -11,10 +11,7 @@ export class PersonalInfoEncryption {
       return Buffer.from(keyHex, "hex");
     }
 
-    const secret =
-      process.env.APP_SECRET ||
-      process.env.APP_SECURITY_SEED ||
-      (process.env.NODE_ENV === "production" ? "" : "development-secret");
+    const secret = process.env.APP_SECRET || process.env.APP_SECURITY_SEED;
     if (!secret) {
       throw new Error(
         "Encryption key is not configured. Set PERSONAL_INFO_ENCRYPTION_KEY or APP_SECRET.",

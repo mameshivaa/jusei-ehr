@@ -23,7 +23,6 @@ function buildTestEnv(port: number): Record<string, string> {
     }
   }
   env.NODE_ENV = "development";
-  env.DEV_BYPASS_AUTH = "true";
   env.BACKUP_SECRET = BACKUP_SECRET;
   env.DATABASE_URL = `file:${DB_PATH}`;
   env.VOSS_USER_DATA_DIR = USER_DATA_DIR;
@@ -300,25 +299,10 @@ test.describe.serial("backup restore", () => {
     await setMarker("after");
 
     await page.route("**/api/backup/restore", async (route) => {
-      const request = route.request();
-      const raw = request.postData();
-      let payload: Record<string, unknown> = {};
-      if (raw) {
-        try {
-          payload = JSON.parse(raw) as Record<string, unknown>;
-        } catch {
-          payload = {};
-        }
-      }
-      await route.continue({
-        postData: JSON.stringify({
-          ...payload,
-          e2eForceFailAfterMove: true,
-        }),
-        headers: {
-          ...request.headers(),
-          "content-type": "application/json",
-        },
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "e2e forced failure" }),
       });
     });
 

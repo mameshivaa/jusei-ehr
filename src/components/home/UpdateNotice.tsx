@@ -13,23 +13,17 @@ function formatPercent(value: number | null | undefined): string | null {
   return `${Math.round(value)}%`;
 }
 
-const isDev = process.env.NODE_ENV === "development";
-
 export function UpdateNotice() {
   const [isClient, setIsClient] = useState(false);
   const [state, setState] = useState<UpdateState | null>(null);
   const [appVersion, setAppVersion] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [mockState, setMockState] = useState<UpdateState | null>(null);
-  const [mockVersion, setMockVersion] = useState("1.2.3");
-  const [mockTargetVersion] = useState("1.3.0");
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const isElectronClient = isClient && isElectron();
-  const isDevPreview = isClient && isDev && !isElectronClient;
 
   useEffect(() => {
     if (!isElectronClient) return;
@@ -45,21 +39,6 @@ export function UpdateNotice() {
     };
   }, [isElectronClient]);
 
-  useEffect(() => {
-    if (!isDevPreview) return;
-    setMockState({
-      status: "available",
-      updateInfo: {
-        version: mockTargetVersion,
-        releaseDate: new Date().toISOString(),
-        releaseNotes:
-          "・ホームのお知らせ欄の表示改善\n・施術録検索の速度向上\n・軽微な不具合修正",
-      },
-      downloadProgress: null,
-      error: null,
-    });
-  }, [isDevPreview, mockTargetVersion]);
-
   const handleCheckUpdate = useCallback(() => {
     updateManager.checkForUpdates();
   }, []);
@@ -72,78 +51,12 @@ export function UpdateNotice() {
     updateManager.installUpdate();
   }, []);
 
-  const effectiveState = isDevPreview ? mockState : state;
-  const effectiveVersion = isDevPreview ? mockVersion : appVersion;
-
-  const status = effectiveState?.status ?? "idle";
-  const updateInfo = effectiveState?.updateInfo ?? null;
-  const downloadPercent = formatPercent(
-    effectiveState?.downloadProgress?.percent,
-  );
-
-  const handleMockDownload = useCallback(() => {
-    setMockState((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "downloading",
-            downloadProgress: {
-              bytesPerSecond: 0,
-              percent: 0,
-              transferred: 0,
-              total: 100,
-            },
-            error: null,
-          }
-        : prev,
-    );
-  }, []);
-
-  useEffect(() => {
-    if (!isDevPreview || status !== "downloading") return;
-    const timer = setInterval(() => {
-      setMockState((prev) => {
-        if (!prev?.downloadProgress) return prev;
-        const nextPercent = Math.min(100, prev.downloadProgress.percent + 12);
-        if (nextPercent >= 100) {
-          return {
-            ...prev,
-            status: "downloaded",
-            downloadProgress: null,
-          };
-        }
-        return {
-          ...prev,
-          downloadProgress: {
-            ...prev.downloadProgress,
-            percent: nextPercent,
-          },
-        };
-      });
-    }, 600);
-    return () => clearInterval(timer);
-  }, [isDevPreview, status]);
-
-  const handleMockInstall = useCallback(() => {
-    setMockVersion(mockTargetVersion);
-    setMockState((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: "not-available",
-            updateInfo: null,
-            downloadProgress: null,
-            error: null,
-          }
-        : prev,
-    );
-  }, [mockTargetVersion]);
+  const status = state?.status ?? "idle";
+  const updateInfo = state?.updateInfo ?? null;
+  const downloadPercent = formatPercent(state?.downloadProgress?.percent);
 
   const content = useMemo(() => {
-    if (!isClient) {
-      return null;
-    }
-    if (!isElectronClient && !isDevPreview) {
+    if (!isClient || !isElectronClient) {
       return null;
     }
 
@@ -151,16 +64,14 @@ export function UpdateNotice() {
       case "checking":
         return {
           text: "アプリの更新を確認中です",
-          detail: effectiveVersion
-            ? `現在のバージョン: v${effectiveVersion}`
-            : null,
+          detail: appVersion ? `現在のバージョン: v${appVersion}` : null,
           action: null,
         };
       case "available":
         return {
           text: "新しいバージョンが利用可能です",
           detail: updateInfo
-            ? `v${effectiveVersion || "?"} → v${updateInfo.version}`
+            ? `v${appVersion || "?"} → v${updateInfo.version}`
             : null,
           action: { label: "更新", onClick: () => setIsModalOpen(true) },
         };
@@ -179,9 +90,7 @@ export function UpdateNotice() {
       case "not-available":
         return {
           text: "アプリは最新です",
-          detail: effectiveVersion
-            ? `現在のバージョン: v${effectiveVersion}`
-            : null,
+          detail: appVersion ? `現在のバージョン: v${appVersion}` : null,
           action: null,
         };
       case "error":
@@ -194,25 +103,20 @@ export function UpdateNotice() {
       default:
         return {
           text: "更新状況を確認できます",
-          detail: effectiveVersion
-            ? `現在のバージョン: v${effectiveVersion}`
-            : null,
-          action: isDevPreview
-            ? { label: "更新を確認", onClick: () => setIsModalOpen(true) }
-            : { label: "更新を確認", onClick: handleCheckUpdate },
+          detail: appVersion ? `現在のバージョン: v${appVersion}` : null,
+          action: { label: "更新を確認", onClick: handleCheckUpdate },
         };
     }
   }, [
+    appVersion,
     downloadPercent,
     handleCheckUpdate,
     handleInstall,
     isClient,
     isElectronClient,
-    isDevPreview,
-    effectiveVersion,
-    updateInfo,
-    status,
     state?.error,
+    status,
+    updateInfo,
   ]);
 
   if (!content) return null;
@@ -253,7 +157,7 @@ export function UpdateNotice() {
           <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
             <div className="text-xs text-slate-500">バージョン</div>
             <div className="mt-1 font-medium text-slate-900">
-              v{effectiveVersion || "読み込み中..."}
+              v{appVersion || "読み込み中..."}
               {updateInfo?.version ? ` → v${updateInfo.version}` : ""}
             </div>
           </div>
@@ -284,7 +188,7 @@ export function UpdateNotice() {
 
           {status === "error" && (
             <div className="text-red-700">
-              {effectiveState?.error || "更新の確認中にエラーが発生しました。"}
+              {state?.error || "更新の確認中にエラーが発生しました。"}
             </div>
           )}
 
@@ -299,7 +203,7 @@ export function UpdateNotice() {
             {status === "available" && (
               <button
                 type="button"
-                onClick={isDevPreview ? handleMockDownload : handleDownload}
+                onClick={handleDownload}
                 className="rounded-lg bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg hover:brightness-110 transition"
               >
                 アップデートを開始
@@ -317,7 +221,7 @@ export function UpdateNotice() {
             {status === "downloaded" && (
               <button
                 type="button"
-                onClick={isDevPreview ? handleMockInstall : handleInstall}
+                onClick={handleInstall}
                 className="rounded-lg bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg hover:brightness-110 transition"
               >
                 再起動して更新

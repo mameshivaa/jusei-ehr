@@ -1019,22 +1019,12 @@ export async function listBackups(): Promise<{
 /**
  * バックアップを復元
  */
-type RestoreBackupOptions = {
-  e2eForceFailAfterMove?: boolean;
-};
-
-export async function restoreBackup(
-  backupFileName: string,
-  options: RestoreBackupOptions = {},
-): Promise<{
+export async function restoreBackup(backupFileName: string): Promise<{
   success: boolean;
   error?: string;
   backupCreatedAt?: string;
 }> {
   try {
-    const isE2E =
-      process.env.E2E_MODE === "true" && process.env.NODE_ENV !== "production";
-    const forceFailAfterMove = isE2E && options.e2eForceFailAfterMove === true;
     const safeFileName = normalizeBackupFileName(backupFileName);
     if (!safeFileName) {
       return {
@@ -1179,9 +1169,6 @@ export async function restoreBackup(
       }
 
       try {
-        if (forceFailAfterMove) {
-          throw new Error("E2E forced restore failure");
-        }
         await fs.rename(restoreTempPath, dbPath);
       } catch {
         if (movedCurrentDb) {

@@ -36,9 +36,7 @@ if [ ! -f .env ]; then
 
     cat > .env << EOF
 DATABASE_URL="file:./prisma/prisma/dev.db"
-
-# 開発モード: trueで認証・セットアップをスキップ
-DEV_BYPASS_AUTH="true"
+APP_SECRET="change-this-to-a-strong-secret"
 EOF
     
     echo -e "${GREEN}✅ .env ファイルを作成しました${NC}"
@@ -63,10 +61,4 @@ echo -e "${GREEN}✅ セットアップが完了しました！${NC}"
 echo ""
 echo "次のコマンドで開発サーバーを起動できます:"
 echo -e "${YELLOW}  npm run dev${NC}"
-echo ""
-echo -e "${GREEN}開発モードが有効です (DEV_BYPASS_AUTH=true)${NC}"
-echo "認証とセットアップをスキップして、直接ダッシュボードにアクセスできます。"
-echo ""
-echo "本番モードでテストする場合は .env の DEV_BYPASS_AUTH を false に変更してください。"
-echo ""
-echo -e "${RED}⚠️  本番環境では DEV_BYPASS_AUTH を削除または false に設定してください！${NC}"
+echo -e "${YELLOW}⚠️  APP_SECRET は必ず強力な値に変更してください${NC}"

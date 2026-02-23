@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const user = await requireRole("ADMIN");
 
     const body = await request.json();
-    const { fileName, e2eForceFailAfterMove } = body ?? {};
+    const { fileName } = body ?? {};
 
     if (!fileName) {
       return NextResponse.json(
@@ -21,9 +21,6 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const isE2E =
-      process.env.E2E_MODE === "true" && process.env.NODE_ENV !== "production";
-    const forceFailAfterMove = isE2E && e2eForceFailAfterMove === true;
     const safeFileName = normalizeBackupFileName(String(fileName));
     if (!safeFileName) {
       return NextResponse.json(
@@ -33,9 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const startedAt = Date.now();
-    const result = await restoreBackup(safeFileName, {
-      e2eForceFailAfterMove: forceFailAfterMove,
-    });
+    const result = await restoreBackup(safeFileName);
     const durationMs = Date.now() - startedAt;
     const rpoSeconds =
       result.backupCreatedAt &&

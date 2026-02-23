@@ -11,7 +11,6 @@
   "description": "接骨院向け電子カルテシステム（Source-Available）",
   "scripts": {
     "dev": "next dev",
-    "dev:free": "DEV_BYPASS_AUTH=true next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

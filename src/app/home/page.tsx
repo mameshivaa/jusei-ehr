@@ -58,13 +58,6 @@ export default async function HomePage() {
     }),
   ]);
 
-  const isDev = process.env.NODE_ENV === "development";
-  const mockActivities = [
-    { id: "mock-record-1", text: "山田 太郎 の施術録", time: "1/3 09:20" },
-    { id: "mock-record-2", text: "佐藤 花子 の施術録", time: "1/3 08:45" },
-    { id: "mock-patient-1", text: "鈴木 一郎 を更新", time: "1/2 17:10" },
-  ];
-
   const todayLabel = new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
     month: "2-digit",
@@ -138,14 +131,6 @@ export default async function HomePage() {
                   time={format(patient.updatedAt, "M/d HH:mm")}
                 />
               ))
-            ) : isDev ? (
-              mockActivities.map((activity) => (
-                <ActivityItem
-                  key={activity.id}
-                  text={activity.text}
-                  time={activity.time}
-                />
-              ))
             ) : (
               <div className="text-sm text-slate-400 py-2">
                 最近のアクティビティはありません
@@ -165,25 +150,6 @@ function StatCard({ label, value }: { label: string; value: number }) {
       <div className="text-2xl md:text-3xl font-semibold text-slate-800 tracking-tight">
         {value}
       </div>
-    </div>
-  );
-}
-
-function NoticeItem({
-  text,
-  type,
-}: {
-  text: string;
-  type: "info" | "neutral";
-}) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <div
-        className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${
-          type === "info" ? "bg-slate-400" : "bg-slate-300"
-        }`}
-      />
-      <span className="text-sm text-slate-600 leading-relaxed">{text}</span>
     </div>
   );
 }

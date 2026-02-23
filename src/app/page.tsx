@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import DownloadLandingClient from "./landing/LandingClient";
-import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 const isElectronBuild = process.env.ELECTRON_BUILD === "true";
 const isElectronRuntime = process.env.ELECTRON_RUNTIME === "true";
@@ -11,18 +10,6 @@ export default async function Home() {
   // Webでは配布LPを表示し、Electron実行時のみ既存アプリ導線を維持する
   if (!isElectronBuild && !isElectronRuntime) {
     return <DownloadLandingClient />;
-  }
-
-  // 開発環境で認証をスキップする場合はセットアップもスキップ
-  if (isDevBypassAuthEnabled()) {
-    // 開発用ダミークリニックを自動作成
-    const clinic = await prisma.clinic.findFirst();
-    if (!clinic) {
-      await prisma.clinic.create({
-        data: {},
-      });
-    }
-    redirect("/patients");
   }
 
   // セットアップチェック

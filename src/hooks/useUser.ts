@@ -16,17 +16,13 @@ type User = {
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const loadUser = async () => {
       try {
-        console.log("[useUser] Loading user...");
-        // まずサーバーからユーザー情報を取得を試みる
-        // DEV_BYPASS_AUTHの場合はダミーユーザーが返される
         const response = await fetch("/api/auth/user");
-        console.log("[useUser] Response status:", response.status);
         if (response.ok) {
           const userData = await response.json();
-          console.log("[useUser] User loaded:", userData);
           setUser(userData);
         } else {
           setUser(null);
@@ -36,7 +32,6 @@ export function useUser() {
         setUser(null);
       } finally {
         setLoading(false);
-        console.log("[useUser] Loading complete");
       }
     };
 

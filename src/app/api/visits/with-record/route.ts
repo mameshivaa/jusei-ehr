@@ -5,7 +5,6 @@ import { requireApiPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { createAuditLog, getAuditLogData } from "@/lib/audit";
 import { ACTIVE_CHART_STATUS, normalizeChartStatus } from "@/lib/charts/status";
-import { isDevBypassAuthEnabled } from "@/lib/security/dev-bypass";
 
 export const dynamic = "force-dynamic";
 
@@ -31,20 +30,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = requestSchema.parse(body);
 
-    if (!isDevBypassAuthEnabled()) {
-      const operator = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { id: true },
-      });
-      if (!operator) {
-        return NextResponse.json(
-          {
-            error:
-              "操作ユーザーが登録されていません。管理者に連絡してください。",
-          },
-          { status: 403 },
-        );
-      }
+    const operator = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true },
+    });
+    if (!operator) {
+      return NextResponse.json(
+        {
+          error: "操作ユーザーが登録されていません。管理者に連絡してください。",
+        },
+        { status: 403 },
+      );
     }
 
     const patient = await prisma.patient.findUnique({
