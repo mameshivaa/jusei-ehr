@@ -30,8 +30,9 @@
     "electron:start": "NODE_ENV=development electron electron-dist/main.js",
     "electron:build:ts": "tsc -p electron/tsconfig.json",
     "electron:build:next": "node scripts/build-next-electron.js",
+    "electron:install-app-deps": "node scripts/postinstall.js",
     "electron:prepare-template-db": "node scripts/prepare-template-db.js",
-    "electron:build": "npm run electron:build:ts && npm run electron:build:next && npm run electron:prepare-template-db && node scripts/prepare-appdir.js",
+    "electron:build": "npm run electron:build:ts && npm run electron:build:next && npm run electron:install-app-deps && npm run electron:prepare-template-db && node scripts/prepare-appdir.js",
     "electron:pack": "npm run electron:build && electron-builder --dir",
     "electron:dist": "npm run electron:build && electron-builder",
     "electron:dist:publish": "npm run electron:build && electron-builder --publish always",
@@ -44,7 +45,7 @@
     "electron:preflight:win-signed": "node scripts/check-win-signing-env.js",
     "electron:dist:win:signed": "npm run electron:preflight:win-signed && npm run electron:dist:win",
     "electron:dist:linux": "npm run electron:build && electron-builder --linux",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "@prisma/client": "^6.11.0",
