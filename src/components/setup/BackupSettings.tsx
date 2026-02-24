@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Usb,
   FolderOpen,
   CheckCircle2,
-  AlertCircle,
-  ArrowRight,
   Loader2,
   Copy,
   RefreshCw,
@@ -19,12 +17,18 @@ interface BackupSettingsProps {
   directory: string;
   source: BackupSource;
   loading: boolean;
+  directoryValidation: "idle" | "checking" | "valid" | "invalid";
+  directoryValidationMessage?: string;
   externalAvailable?: boolean;
   secret: string;
+  secretConfirmed: boolean;
+  secretConfirmInvalid?: boolean;
   onSecretChange: (secret: string) => void;
+  onSecretConfirmedChange: (confirmed: boolean) => void;
   secretInvalid?: boolean;
   onDirectoryChange: (directory: string) => void;
   onDetectRequested: () => void;
+  onValidateDirectory: () => void;
   onSourceChange?: (source: BackupSource) => void;
 }
 
@@ -32,12 +36,18 @@ export function BackupSettings({
   directory,
   source,
   loading,
+  directoryValidation,
+  directoryValidationMessage = "",
   externalAvailable = true,
   secret,
+  secretConfirmed,
+  secretConfirmInvalid = false,
   onSecretChange,
+  onSecretConfirmedChange,
   secretInvalid = false,
   onDirectoryChange,
   onDetectRequested,
+  onValidateDirectory,
   onSourceChange,
 }: BackupSettingsProps) {
   const isElectron =
@@ -78,6 +88,17 @@ export function BackupSettings({
       onDirectoryChange(result.filePaths[0]);
     }
   };
+
+  const directoryStatusText =
+    directoryValidation === "checking"
+      ? "確認中"
+      : directoryValidation === "valid"
+        ? "確認済み"
+        : directoryValidation === "invalid"
+          ? "要確認"
+          : "未確認";
+
+  const keyReady = secret.trim().length >= 8;
 
   return (
     <div className="space-y-4">
@@ -216,6 +237,39 @@ export function BackupSettings({
                   手動でフォルダを選択
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={onValidateDirectory}
+                disabled={loading || directoryValidation === "checking"}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-slate-500"
+              >
+                {directoryValidation === "checking" ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    保存先を確認中...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    保存先を確認
+                  </>
+                )}
+              </button>
+
+              {directoryValidationMessage ? (
+                <div
+                  className={`rounded-md border px-3 py-2 text-xs ${
+                    directoryValidation === "valid"
+                      ? "border-green-200 bg-green-50 text-green-800"
+                      : directoryValidation === "invalid"
+                        ? "border-red-200 bg-red-50 text-red-700"
+                        : "border-slate-200 bg-slate-50 text-slate-600"
+                  }`}
+                >
+                  {directoryValidationMessage}
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -227,8 +281,11 @@ export function BackupSettings({
             }`}
           >
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              BACKUP_SECRET
+              復元キー（必須）
             </label>
+            <p className="text-xs text-slate-500 mb-2">
+              内部設定名: <code>BACKUP_SECRET</code>
+            </p>
             <div className="flex flex-col gap-2">
               <input
                 type="password"
@@ -265,9 +322,35 @@ export function BackupSettings({
               className={`mt-1 text-xs ${secretInvalid ? "text-red-600" : "text-slate-500"}`}
             >
               {secretInvalid
-                ? "自動生成ボタンで BACKUP_SECRET を作成してください。"
-                : "自動バックアップの暗号化と起動・終了時の実行に使用されます。忘れると復元できません。"}
+                ? "自動生成ボタンで復元キーを作成してください。"
+                : "自動バックアップの暗号化に使用します。忘れると復元できません。"}
             </p>
+
+            <label
+              className={`mt-2 flex items-start gap-2 text-xs ${
+                secretConfirmInvalid
+                  ? "rounded-md border border-red-200 bg-red-50 px-2 py-2 text-red-700"
+                  : "text-slate-700"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={secretConfirmed}
+                onChange={(e) => onSecretConfirmedChange(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>復元キーを安全な場所に保存しました</span>
+            </label>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-700 space-y-1">
+            <div className="font-medium text-slate-800">現在の設定</div>
+            <div className="break-all">
+              保存先: {directory || "未選択"}
+            </div>
+            <div>保存先チェック: {directoryStatusText}</div>
+            <div>復元キー: {keyReady ? "生成済み" : "未生成"}</div>
+            <div>保管確認: {secretConfirmed ? "確認済み" : "未確認"}</div>
           </div>
         </div>
       </div>

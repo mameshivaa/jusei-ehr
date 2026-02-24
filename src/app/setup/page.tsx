@@ -44,12 +44,19 @@ export default function SetupPage() {
   const [backupSourceTouched, setBackupSourceTouched] = useState(false);
   const [externalAvailable, setExternalAvailable] = useState(true);
   const [backupLoading, setBackupLoading] = useState(true);
+  const [backupDirectoryValidation, setBackupDirectoryValidation] = useState<
+    "idle" | "checking" | "valid" | "invalid"
+  >("idle");
+  const [backupDirectoryValidationMessage, setBackupDirectoryValidationMessage] =
+    useState("");
+  const [backupSecretConfirmed, setBackupSecretConfirmed] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [step, setStep] = useState(0);
   const stepChangeTimeRef = useRef<number>(Date.now());
   const longDocRef = useRef<HTMLDivElement | null>(null);
   const isSubmittingRef = useRef(false);
+  const backupValidationSeqRef = useRef(0);
   const [contentVisible, setContentVisible] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -104,6 +111,12 @@ export default function SetupPage() {
   const progressFillHeight = step === 0 ? "6px" : `${progressPercentage}%`;
   const progressIndicatorTop =
     step === 0 ? "0px" : `calc(${progressPercentage}% - 6px)`;
+  const isBackupStepReady =
+    backupDirectoryValidation === "valid" &&
+    backupSecret.trim().length >= 8 &&
+    backupSecretConfirmed;
+  const disableNextButton =
+    loading || (step === STEP_BACKUP && !isBackupStepReady);
 
   const generateRecoveryCode = useCallback(() => {
     if (typeof window !== "undefined" && window.crypto?.getRandomValues) {
@@ -220,8 +233,21 @@ export default function SetupPage() {
     }
 
     if (target === STEP_BACKUP) {
+      if (!backupDirectory.trim()) {
+        errors.backupDirectory = "バックアップ保存先を選択してください";
+      } else if (backupDirectoryValidation !== "valid") {
+        errors.backupDirectory =
+          backupDirectoryValidation === "invalid" &&
+          backupDirectoryValidationMessage
+            ? backupDirectoryValidationMessage
+            : "バックアップ保存先の確認を完了してください";
+      }
       if (backupSecret.trim().length < 8) {
-        errors.backupSecret = "BACKUP_SECRET は8文字以上の設定が必要です";
+        errors.backupSecret = "復元キーを生成してください";
+      }
+      if (!backupSecretConfirmed) {
+        errors.backupSecretConfirmed =
+          "復元キーを保存したことを確認してください";
       }
       return errors;
     }
@@ -297,6 +323,11 @@ export default function SetupPage() {
       passwordConfirmLength: passwordConfirm.length,
       passwordMatches: password === passwordConfirm,
       operationsConfirmed,
+      backupDirectory,
+      backupDirectoryValidation,
+      backupDirectoryValidationMessage,
+      backupSecretLength: backupSecret.length,
+      backupSecretConfirmed,
       longDocConfirmed,
       longDocReady,
       recoveryCodeConfirmed,
@@ -357,6 +388,53 @@ export default function SetupPage() {
     checkSetupStatus();
   }, [router]);
 
+  const validateBackupDirectory = useCallback(async (directory: string) => {
+    const targetDirectory = directory.trim();
+    if (!targetDirectory) {
+      setBackupDirectoryValidation("invalid");
+      setBackupDirectoryValidationMessage(
+        "バックアップ保存先を選択してください",
+      );
+      return false;
+    }
+
+    const seq = backupValidationSeqRef.current + 1;
+    backupValidationSeqRef.current = seq;
+
+    setBackupDirectoryValidation("checking");
+    setBackupDirectoryValidationMessage("保存先を確認中です...");
+
+    try {
+      const response = await fetch("/api/backup/location/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ directory: targetDirectory }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (seq !== backupValidationSeqRef.current) return false;
+
+      if (!response.ok || payload?.ok === false) {
+        const message =
+          (payload as { error?: string })?.error ||
+          "保存先を確認できませんでした";
+        setBackupDirectoryValidation("invalid");
+        setBackupDirectoryValidationMessage(message);
+        return false;
+      }
+
+      setBackupDirectoryValidation("valid");
+      setBackupDirectoryValidationMessage("保存先を確認しました");
+      return true;
+    } catch {
+      if (seq !== backupValidationSeqRef.current) return false;
+      setBackupDirectoryValidation("invalid");
+      setBackupDirectoryValidationMessage(
+        "保存先の確認に失敗しました。もう一度お試しください。",
+      );
+      return false;
+    }
+  }, []);
+
   const detectBackupLocation = useCallback(async () => {
     try {
       setBackupLoading(true);
@@ -365,6 +443,8 @@ export default function SetupPage() {
         const data = await response.json();
         if (data?.directory) {
           setBackupDirectory(data.directory);
+          setBackupDirectoryValidation("idle");
+          setBackupDirectoryValidationMessage("");
         }
         const detectedSource =
           data?.source === "external" || data?.source === "default"
@@ -381,6 +461,8 @@ export default function SetupPage() {
         const errorData = await response.json();
         if (errorData?.directory && !backupDirectory) {
           setBackupDirectory(errorData.directory);
+          setBackupDirectoryValidation("idle");
+          setBackupDirectoryValidationMessage("");
         }
       } catch {
         // JSONパースに失敗した場合は無視
@@ -402,18 +484,41 @@ export default function SetupPage() {
     setBackupDirectory(value);
     setBackupSource("custom");
     setBackupSourceTouched(true);
+    setBackupDirectoryValidation("idle");
+    setBackupDirectoryValidationMessage("");
+    clearFieldError("backupDirectory");
   }, []);
 
   const handleBackupSourceChange = useCallback(
     (source: "external" | "default" | "custom") => {
       setBackupSource(source);
       setBackupSourceTouched(true);
+      setBackupDirectoryValidation("idle");
+      setBackupDirectoryValidationMessage("");
+      clearFieldError("backupDirectory");
       if (source === "external") {
         void detectBackupLocation();
       }
     },
     [detectBackupLocation],
   );
+
+  useEffect(() => {
+    if (step !== STEP_BACKUP || backupLoading) return;
+    const targetDirectory = backupDirectory.trim();
+    if (!targetDirectory) {
+      setBackupDirectoryValidation("invalid");
+      setBackupDirectoryValidationMessage(
+        "バックアップ保存先を選択してください",
+      );
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void validateBackupDirectory(targetDirectory);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [step, backupLoading, backupDirectory, validateBackupDirectory]);
 
   useEffect(() => {
     if (!sameAsOfficer) return;
@@ -501,6 +606,24 @@ export default function SetupPage() {
       clearFieldError("recoveryCodeConfirmed");
     }
   }, [recoveryCodeConfirmed]);
+
+  useEffect(() => {
+    if (backupSecret.trim().length >= 8) {
+      clearFieldError("backupSecret");
+    }
+  }, [backupSecret]);
+
+  useEffect(() => {
+    if (backupSecretConfirmed) {
+      clearFieldError("backupSecretConfirmed");
+    }
+  }, [backupSecretConfirmed]);
+
+  useEffect(() => {
+    if (backupDirectoryValidation === "valid") {
+      clearFieldError("backupDirectory");
+    }
+  }, [backupDirectoryValidation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1219,15 +1342,35 @@ export default function SetupPage() {
                         source={backupSource}
                         externalAvailable={externalAvailable}
                         loading={backupLoading}
+                        directoryValidation={backupDirectoryValidation}
+                        directoryValidationMessage={
+                          backupDirectoryValidationMessage
+                        }
                         secret={backupSecret}
+                        secretConfirmed={backupSecretConfirmed}
+                        secretConfirmInvalid={
+                          !!getFieldError("backupSecretConfirmed")
+                        }
                         secretInvalid={!!getFieldError("backupSecret")}
                         onDirectoryChange={handleBackupDirectoryChange}
                         onDetectRequested={detectBackupLocation}
+                        onValidateDirectory={() => {
+                          void validateBackupDirectory(backupDirectory);
+                        }}
                         onSourceChange={handleBackupSourceChange}
                         onSecretChange={(value) => {
                           setBackupSecret(value);
                           if (value.trim().length >= 8) {
                             clearFieldError("backupSecret");
+                          }
+                          if (value.trim().length < 8) {
+                            setBackupSecretConfirmed(false);
+                          }
+                        }}
+                        onSecretConfirmedChange={(confirmed) => {
+                          setBackupSecretConfirmed(confirmed);
+                          if (confirmed) {
+                            clearFieldError("backupSecretConfirmed");
                           }
                         }}
                       />
@@ -1606,7 +1749,12 @@ export default function SetupPage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={loading}
+                  disabled={disableNextButton}
+                  title={
+                    step === STEP_BACKUP && !isBackupStepReady
+                      ? "保存先確認・復元キー生成・保管確認を完了してください"
+                      : undefined
+                  }
                   className="flex items-center gap-2 rounded-md bg-slate-900 px-5 py-2 text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-slate-400 focus-visible:outline-offset-1"
                 >
                   次へ
